@@ -1,4 +1,4 @@
-X11::Protocol, version 0.02
+X11::Protocol, version 0.03
 
 Copyright (C) 1997 Stephen McCamant. All rights reserved. This program
 is free software; you can redistribute and/or modify it under the same
@@ -35,7 +35,7 @@ for Debian Linux users)
 level approach is intentional -- the author is working on a
 higher-level interface, which will be more object-oriented and easier
 to use, and allow this low level to eventually be replaced by an XS
-interface to Xlib.
+interface to Xlib. Send email if you want to alpha-test or contribute.
 
 * This is an alpha release, so the interface is subject to change. This
 means that you should tell the author if you find some part

@@ -1,19 +1,19 @@
 #!/usr/bin/perl
 
-package X11::Connection::INETFH;
+package X11::Protocol::Connection::INETFH;
 
 # Copyright (C) 1997 Stephen McCamant. All rights reserved. This program
 # is free software; you can redistribute and/or modify it under the same
 # terms as Perl itself.
 
-use X11::Connection::FileHandle;
+use X11::Protocol::Connection::FileHandle;
 use FileHandle;
 use Socket;
 use Carp;
 use strict;
 use vars qw($VERSION @ISA);
 
-@ISA = ('X11::Connection::FileHandle');
+@ISA = ('X11::Protocol::Connection::FileHandle');
 
 $VERSION = 0.01;
 
@@ -34,13 +34,14 @@ __END__
 
 =head1 NAME
 
-X11::Connection::INETFH - Perl module for FileHandle-based TCP/IP X11 connections
+X11::Protocol::Connection::INETFH - Perl module for FileHandle-based TCP/IP X11 connections
 
 =head1 SYNOPSIS
 
   use X11::Protocol;
-  use X11::Connection::INETFH;
-  $conn = X11::Connection::INETFH->open($host, $display_number);
+  use X11::Protocol::Connection::INETFH;
+  $conn = X11::Protocol::Connection::INETFH
+    ->open($host, $display_number);
   $x = X11::Protocol->new($conn); 
 
 =head1 DESCRIPTION
@@ -57,8 +58,8 @@ Stephen McCamant <alias@mcs.com>.
 
 L<perl(1)>,
 L<X11::Protocol>,
-L<X11::Connection::UNIXFH>,
-L<X11::Connection::FileHandle>, 
+L<X11::Protocol::Connection::UNIXFH>,
+L<X11::Protocol::Connection::FileHandle>, 
 L<FileHandle>.
 
 =cut

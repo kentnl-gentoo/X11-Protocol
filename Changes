@@ -16,3 +16,11 @@ Revision history for Perl module X11::Protocol.
 	- $x->visuals now corresponds to documentation	
 	- moved Connection::* and Ext::* under X11::Protocol::
 	- random cleanup
+
+0.03  Wed Aug 27 1997
+	- fixed minor bug in SelectionNotify event 
+	- added forgotten `format' field in ClientMessage event
+	- added forgotten `GCFillRule' const type	
+	- added $x->{'do_interp'} to control interpretation
+	- renamed forgotten X11::Connection::INETFH
+	- fixed typos

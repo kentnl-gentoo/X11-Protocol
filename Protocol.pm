@@ -16,7 +16,7 @@ require Exporter;
 
 @EXPORT_OK = qw(pad padding padded hexi make_num_hash default_error_handler);
 
-$VERSION = 0.02;
+$VERSION = 0.03;
 
 sub pad ($) 
 {
@@ -103,7 +103,7 @@ my(%Const) =
 		  'Expose', 'GraphicsExposure', 'NoExposure',
 		  'VisibilityNotify', 'CreateNotify', 'DestroyNotify',
 		  'UnmapNotify', 'MapNotify', 'MapRequest',
-		  'ReparentNotify', 'ConfigureNotify', 'ConfigureRquest',
+		  'ReparentNotify', 'ConfigureNotify', 'ConfigureRequest',
 		  'GravityNotify', 'ResizeRequest', 'CirculateNotify',
 		  'CirculateRequest', 'PropertyNotify', 'SelectionClear',
 		  'SelectionRequest', 'SelectionNotify',
@@ -125,7 +125,7 @@ my(%Const) =
      'Bool' => ['False', 'True'],
      'Class' => ['CopyFromParent', 'InputOutput', 'InputOnly'],
      'MapState' => ['Unmapped', 'Unviewable', 'Viewable'],
-     'StackMode' => ['Above', 'Below', 'TopIf', 'BelowIf', 'Opposite'],
+     'StackMode' => ['Above', 'Below', 'TopIf', 'BottomIf', 'Opposite'],
      'CirculateDirection' => ['RaiseLowest', 'LowerHighest'],
      'ChangePropertyMode' => ['Replace', 'Prepend', 'Append'],
      'CrossingNotifyDetail' => ['Ancestor', 'Virtual', 'Inferior',
@@ -172,6 +172,7 @@ my(%Const) =
      'GCCapStyle' => ['NotLast', 'Butt', 'Round', 'Projecting'],
      'GCJoinStyle' => ['Miter', 'Round', 'Bevel'],
      'GCFillStyle' => ['Solid', 'Tiled', 'Stippled', 'OpaqueStippled'],
+     'GCFillRule' => ['EvenOdd', 'Winding'],
      'GCSubwindowMode' => ['ClipByChildren', 'IncludeInferiors'],
      'GCArcMode' => ['Chord', 'PieSlice'],
      'Error' => [0, 'Request', 'Value', 'Window', 'Pixmap', 'Atom', 
@@ -185,6 +186,13 @@ my(%Const_num) = (); # Filled in dynamically
 sub interp
 {
     my($self) = shift;
+    return $_[1] unless $self->{'do_interp'};
+    return $self->do_interp(@_);
+}
+
+sub do_interp
+{
+    my $self = shift;
     my($type, $num) = @_;
     carp "Unknown constant type `$type'\n"
 	unless exists $self->{'const'}{$type}
@@ -431,20 +439,22 @@ my(@Events) =
     'selection', 'target', ['property', ['None']]],
 #    elsif ($code == 31) # SelectionNotify
     ["xxxxLLLLLxxxxxxxx", ['time', ['CurrentTime']], 'requestor', 'selection',
-    'target', ['property', 'None', 0]],
+    'target', ['property', ['None']]],
 #    elsif ($code == 32) # ColormapNotify
     ["xxxxLLCCxxxxxxxxxxxxxxxxxx", 'window', ['colormap', ['None']], 'new',
     ['state', 'ColormapNotifyState']],
 #    elsif ($code == 33) # ClientMessage
     [sub {
 	my($self, $data, %h) = @_;
+	my($format) = unpack("C", substr($data, 1, 1));
 	my($win, $type) = unpack("LL", substr($data, 4, 8));
 	my($dat) = substr($data, 12, 20);
-	return (%h, 'window' => $win, 'type' => $type, 'data' => $dat);
+	return (%h, 'window' => $win, 'type' => $type, 'data' => $dat,
+		'format' => $format);
     }, sub {
  	my $self = shift;
  	my(%h) = @_;
- 	my($data) = pack("xxxxLL", $h{window}, $h{type}) 
+ 	my($data) = pack("xCxxLL", $h{'format'}, $h{window}, $h{type}) 
 	    . substr($h{data}, 0, 20);
  	return ($data, 1);
      }],
@@ -458,7 +468,7 @@ sub unpack_event
     my $self = shift;
     my($data) = @_;
     my($code, $detail, $seq) = unpack("CCS", substr($data, 0, 4));
-    my($name) = $self->interp('Events', $code & 127);
+    my($name) = $self->do_interp('Events', $code & 127);
     my(%ret);
     $ret{'synthetic'} = 1 if $code & 128; $code &= 127;
     $ret{'name'} = $name;
@@ -498,7 +508,8 @@ sub unpack_event
 		    else
 		    {
 			my($v) = shift @unpacked;
-			$v = $f[1][$v] if $v == 0 or $v == 1 && $f[1][1];
+			$v = $f[1][$v] if $self->{'do_interp'} and 
+			    ($v == 0 or $v == 1 && $f[1][1]);
 			$ret{$f[0]} = $v;
 		    }
 		}
@@ -608,10 +619,10 @@ sub default_error_handler
 	= unpack("xCSLSCxxxxxxxxxxxxxxxxxxxxx", $data);
     my($t);
     $t = join("", "Protocol error: $type (",
-	      $self->interp('Error', $type), "); ",
+	      $self->do_interp('Error', $type), "); ",
 	      "Sequence Number $seq\n",
 	      " Opcode ($major_op, $minor_op) = ",
-	      ($self->interp('Request', $major_op)
+	      ($self->do_interp('Request', $major_op)
 	      or $self->{'ext_request'}{$major_op}[$minor_op][0]), "\n");
     if ($type == 2)
     {
@@ -763,7 +774,7 @@ my(@Requests) =
 	$your_event_mask, $do_not_propagate_mask)
 	 = unpack("xCxxxxxxLSCCLLCCCCLLLS", $data);
      
-     $colormap = "None" unless $colormap;
+     $colormap = "None" if !$colormap and $self->{'do_interp'};
      
      return ("backing_store" => $self->interp('BackingStore', $backing_store),
 	     "visual" => $visual,
@@ -880,7 +891,7 @@ my(@Requests) =
      my($root, $parent, $n)
 	 = unpack("xxxxLLLSxxxxxxxxxxxxxx", substr($data, 0, 32));
      
-     $parent = "None" if $parent == 0;
+     $parent = "None" if $parent == 0 and $self->{'do_interp'};
      
      return ($root, $parent, unpack("L*", substr($data, 32)));
  }],
@@ -894,7 +905,7 @@ my(@Requests) =
      my $self = shift;
      my($data) = @_;
      my($atom) = unpack("xxxxxxxxLxxxxxxxxxxxxxxxxxxxx", $data);
-     $atom = "None" if $atom == 0;
+     $atom = "None" if $atom == 0 and $self->{'do_interp'};
      return $atom;
  }],
 
@@ -966,7 +977,7 @@ my(@Requests) =
      my $self = shift;
      my($data) = @_;
      my($win) = unpack "xxxxxxxxLxxxxxxxxxxxxxxxxxxxx", $data;
-     $win = "None" if $win == 0;
+     $win = "None" if $win == 0 and $self->{'do_interp'};
      return $win;
  }],
 
@@ -1108,7 +1119,7 @@ my(@Requests) =
      my($data) = @_;
      my($same_s, $root, $child, $root_x, $root_y, $win_x, $win_y, $mask)
 	 = unpack "xCxxxxxxLLssssSxxxxxx", $data;
-     $child = 'None' if $child == 0;
+     $child = 'None' if $child == 0 and $self->{'do_interp'};
      return ('same_screen' => $same_s, 'root' => $root, 'child' => $child,
 	     'root_x' => $root_x, 'root_y' => $root_y, 'win_x' => $win_x,
 	     'win_y' => $win_y, 'mask' => $mask);
@@ -1142,7 +1153,7 @@ my(@Requests) =
      my($data) = @_;
      my($same_screen, $child, $dest_x, $dest_y) =
 	 unpack "xCxxxxLssxxxxxxxxxxxxxxxx", $data;
-     $child = "None" if $child == 0;
+     $child = "None" if $child == 0 and $self->{'do_interp'};
      return ($same_screen, $child, $dest_x, $dest_y);
  }],
 
@@ -1175,8 +1186,8 @@ my(@Requests) =
      my($revert_to, $focus) =
 	 unpack "xCxxxxxxLxxxxxxxxxxxxxxxxxxxx", $data;
      $revert_to = $self->interp('InputFocusRevertTo', $revert_to);
-     $focus = "None" if $focus == 0;
-     $focus = "PointerRoot" if $focus == 1;
+     $focus = "None" if $focus == 0 and $self->{'do_interp'};
+     $focus = "PointerRoot" if $focus == 1 and $self->{'do_interp'};
      return ($focus, $revert_to);
  }],
 
@@ -2517,6 +2528,7 @@ sub new
 				 1, 0, 0, 0];
 	$self->choose_screen($screen) if defined($screen)
 	    and $screen <= $#{$self->{'screens'}};
+	$self->{'do_interp'} = 1;
     }
     else
     {
@@ -2684,6 +2696,20 @@ GetAtomName request, but caches the result for efficiency.
 The inverse operation; Return the (numeric) atom correspoding to $name.
 This is similar to the InternAtom request, but caches the result.
 
+=head2 choose_screen
+
+  $x->choose_screen($screen_num);
+
+Indicate that you prefer to use a particular screen of the display. Per-screen
+information, such as 'root', 'width_in_pixels', and 'white_pixel' will be
+made avaliable as 
+
+  $x->{'root'}
+
+instead of
+
+  $x->{'screens'}[$screen_num]{'root'}
+
 =head1 SYMBOLIC CONSTANTS
 
 Generally, symbolic constants used by the protocol, like 'CopyFromParent'
@@ -2710,6 +2736,11 @@ recognized, it is returned intact.
 The inverse operation; given a number and string specifying its type, return
 a string representing the constant.
 
+You can disable interp() and the module's internal interpretation of
+numbers by setting $x->{'do_interp'} to zero. Of course, this isn't
+very useful, unless you have you own definitions for all the
+constants.
+
 Here is a list of available constant types:
 
   AccessMode, AllowEventsMode, AutoRepeatMode, BackingStore,
@@ -2717,28 +2748,13 @@ Here is a list of available constant types:
   CirculatePlace, Class, ClipRectangleOrdering, CloseDownMode,
   ColormapNotifyState, CoordinateMode, CrossingNotifyDetail,
   CrossingNotifyMode, DeviceEvent, DrawDirection, Error, EventMask,
-  Events, FocusDetail, FocusMode, GCArcMode, GCCapStyle, GCFillStyle,
-  GCFunction, GCJoinStyle, GCLineStyle, GCSubwindowMode, GrabStatus,
-  HostChangeMode, HostFamily, ImageFormat, InputFocusRevertTo,
-  KeyMask, LedMode, MapState, MappingChangeStatus,
+  Events, FocusDetail, FocusMode, GCArcMode, GCCapStyle, GCFillRule,
+  GCFillStyle, GCFunction, GCJoinStyle, GCLineStyle, GCSubwindowMode,
+  GrabStatus, HostChangeMode, HostFamily, ImageFormat,
+  InputFocusRevertTo, KeyMask, LedMode, MapState, MappingChangeStatus,
   MappingNotifyRequest, PointerEvent, PolyShape, PropertyNotifyState,
-  Request, ScreenSaver, ScreenSaverAction, Significance,
-  SizeClass, StackMode, SyncMode, VisibilityState, VisualClass,
-  WinGravity
-
-=head2 choose_screen
-
-  $x->choose_screen($screen_num);
-
-Indicate that you prefer to use a particular screen of the display. Per-screen
-information, such as 'root', 'width_in_pixels', and 'white_pixel' will be
-made avaliable as 
-
-  $x->{'root'}
-
-instead of
-
-  $x->{'screens'}[$screen_num]{'root'}
+  Request, ScreenSaver, ScreenSaverAction, Significance, SizeClass,
+  StackMode, SyncMode, VisibilityState, VisualClass, WinGravity
 
 =head1 SERVER INFORMATION
 
@@ -2812,7 +2828,8 @@ Here is an example of what the object's information might look like:
                        'blue_mask'=> 0xc0, 'bits_per_rgb_value' => 6,
                        'colormap_entries' => 8}, ...}
   'error_handler' => &\X11::Protocol::default_error_handler,
-  'event_handler' => sub {}
+  'event_handler' => sub {},
+  'do_interp' => 1
 
 
 =head1 REQUESTS
@@ -3141,7 +3158,7 @@ without a lot of work.
 
   $x->AllocColorCells($cmap, $colors, $planes, $contiguous)
   =>
-  ([@pixles], [@masks])
+  ([@pixels], [@masks])
 
   $x->AllocColorPlanes($cmap, $colors, ($reds, $greens, $blues),
 		       $contiguous)
