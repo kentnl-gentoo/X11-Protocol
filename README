@@ -1,4 +1,4 @@
-X11::Protocol, version 0.03
+X11::Protocol, version 0.04
 
 Copyright (C) 1997 Stephen McCamant. All rights reserved. This program
 is free software; you can redistribute and/or modify it under the same
@@ -11,6 +11,12 @@ X11::Protocol	adpO	Raw interface to X Window System servers
 X11::Keysyms	adpf	X11 key symbols (translation of keysymdef.h)
 X11::Auth	adpO	Read and handle X11 '.Xauthority' files
 
+New in this version: 0.04  Thu Jan 15 1998
+ - made anim.pl's letters rectangular instead of square
+ - changed default display on Win32 from unix:0 to localhost:0
+ - fixed ORA's contatct information in pod
+ - fixed typo
+
 X11::Protocol and the related modules in this distribution are a rough
 equivalent of Xlib (libX11.a, with a bit of Xau and Xext mixed in)
 used for drawing windows on and otherwise manipulating X11 window
@@ -18,11 +24,13 @@ servers.
 
 OTHER THINGS YOU NEED
 
-* perl 5.002	(not tested recently; 5.004 is recommended)
+* perl 5.002	  (not tested recently; 5.004 is recommended)
 
-* an X11 server (any version; it also doesn't have to be on the same
-		 computer, but you must be able to connect to it
-		 over a socket)
+* an X11 server   (any version; it also doesn't have to be on the same
+		   computer, but you must be able to connect to it
+		   over a socket. For Win32 users, a free X server
+                   is offered at 
+                   http://www.microimages.com/freestuf/mix.htm )
 
 * documentation about the X protocol (or at least Xlib)
 O'Reilly has a good book, and the full X distribution includes the

@@ -9,6 +9,10 @@
 * Inline small functions in time critical places (pad*,
   Protocol::g(et|ive))?
 
+* Change braces to Wall style
+
+* Real test suite
+
 Porting:
 	64-bit architectures?
 	avoid '/' as path separator; use File::something?
@@ -39,9 +43,9 @@ Connection types:
 		(shm|msg)(ctl|get|snd|rcv|read|write)(2)?
 
 Other modules:
-	X11::Xlib (XS to libX11.a)
-	X11::Display, X11::Window, X11::GC, etc (more OO, more
-		intuitive interace, could be on top of Xlib)
+	X11::Xlib -- XS to libX11.a (see Ken Fox's X11-Motif stuff)
+	X11::Display, X11::Window, X11::GC, etc -- more OO, more
+		intuitive interace, could be on top of Xlib (in progress)
 
 Long-term goals:
 	Widget library

@@ -24,3 +24,9 @@ Revision history for Perl module X11::Protocol.
 	- added $x->{'do_interp'} to control interpretation
 	- renamed forgotten X11::Connection::INETFH
 	- fixed typos
+
+0.04  Thu Jan 15 1998
+	- made anim.pl's letters rectangular instead of square
+	- changed default display on Win32 from unix:0 to localhost:0
+	- fixed ORA's contatct information in pod
+	- fixed typo

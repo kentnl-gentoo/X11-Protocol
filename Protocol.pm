@@ -2,9 +2,9 @@
 
 package X11::Protocol;
 
-# Copyright (C) 1997 Stephen McCamant. All rights reserved. This program
-# is free software; you can redistribute and/or modify it under the same
-# terms as Perl itself.
+# Copyright (C) 1997, 1998 Stephen McCamant. All rights reserved. This
+# program is free software; you can redistribute and/or modify it
+# under the same terms as Perl itself.
 
 use Carp;
 use strict;
@@ -16,7 +16,7 @@ require Exporter;
 
 @EXPORT_OK = qw(pad padding padded hexi make_num_hash default_error_handler);
 
-$VERSION = 0.03;
+$VERSION = 0.04;
 
 sub pad ($) 
 {
@@ -64,6 +64,17 @@ elsif (pack("L", 1) eq "\1\0\0\0")
 else
 {
     croak "Can't determine byte order!\n";
+}
+
+my($Default_Display);
+
+if ($^O eq "MSWin32")
+{
+    $Default_Display = "localhost";
+}
+else
+{
+    $Default_Display = "unix";
 }
 
 sub give
@@ -2321,7 +2332,7 @@ sub new
     my($class) = shift;
     my($host, $dispnum, $screen);
     my($conn, $display, $family);
-    if (@_ == 0)
+    if (@_ == 0 or $_[0] eq '')
     {
 	if ($main::ENV{'DISPLAY'})
 	{
@@ -2329,8 +2340,8 @@ sub new
 	}
 	else
 	{
-	    carp "Can't find DISPLAY -- guessing `unix:0'";
-	    $display = 'unix:0';
+	    carp "Can't find DISPLAY -- guessing `$Default_Display:0'";
+	    $display = "$Default_Display:0";
 	}
     }
     else # (@_ >= 1)
@@ -2349,7 +2360,7 @@ sub new
     {
 	$display =~ /^(?:[^:]*?\/)?(.*):(\d+)(?:.(\d+))?$/
 	    or croak "Invalid display: `$display'\n";
-	$host = "unix" unless $host = $1;
+	$host = $Default_Display unless $host = $1;
 	$dispnum = $2;
 	$screen = 0 unless $screen = $3;
 	if ($] >= 5.00301) # IO::Socket is bundled
@@ -2621,8 +2632,8 @@ graphics on X11 servers.
 A full description of the protocol is beyond the scope of this documentation;
 for complete information, see the I<X Window System Protocol, X Version 11>,
 available as Postscript or *roff source from C<ftp://ftp.x.org>, or
-I<Volume 0: X Protocol Reference Manual> of O'Reily & Associates's series of
-books about X (ISBN 1-56592-083-X, C<http://www.ora.com>), which contains
+I<Volume 0: X Protocol Reference Manual> of O'Reilly & Associates's series of
+books about X (ISBN 1-56592-083-X, C<http://www.oreilly.com>), which contains
 most of the same information.
 
 =head1 DISCLAIMER

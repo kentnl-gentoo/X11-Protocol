@@ -1627,10 +1627,10 @@ X11::Keysyms - Perl module for names of X11 keysyms
 =head1 DESCRIPTION
 
 This module exports a hash mapping the names of X11 keysyms, such
-as 'A' or 'Linefeed' or 'Hangul_J_YeorinHieuh' onto the numbers that represent
-them. The first argument to 'use' is the name of the variable the hash should
-be exported into, and the rest are names of subsets of the keysysms to export:
-one or more of 
+as 'A' or 'Linefeed' or 'Hangul_J_YeorinHieuh', onto the numbers that
+represent them. The first argument to 'use' is the name of the variable
+the hash should be exported into, and the rest are names of subsets of
+the keysysms to export: one or more of 
 
   'MISCELLANY', 'XKB_KEYS', '3270', 'LATIN1', 'LATIN2',
   'LATIN3', 'LATIN4', 'KATAKANA', 'ARABIC', 'CYRILLIC',

@@ -18,7 +18,7 @@ $x->ChangeProperty($win, $x->atom('WM_NAME'), $x->atom('STRING'), 8,
 		   'Replace', "Animation test");
 $x->MapWindow($win);
 $pm = $x->new_rsrc;
-$x->CreatePixmap($pm, $win, 8, 2 * $size, 2 * $size);
+$x->CreatePixmap($pm, $win, $x->root_depth, 2 * $size, 2 * $size);
 $gc = $x->new_rsrc;
 $x->CreateGC($gc, $pm, 'foreground' => $x->black_pixel,
 	     'graphics_exposures' => 0);
@@ -33,6 +33,7 @@ sub r2p
 {
     my($x, $y) = @_;
     $x -= .5;
+    $x *= .75;
     $y -= .5;
     return [-atan2($y, $x), sqrt($x*$x + $y*$y)];
 }
@@ -127,7 +128,7 @@ for (;;)
 	    # Smooths animation (under Linux, at least). Doesn't wait
 	    # for any real  period of time, just gives up our
 	    # timeslice, I think.
-	    select(undef, undef, undef, 0.000002);
+	    select(undef, undef, undef, 0.00002);
 	    
 	    @old_polys = @polys;
 	    $r *= 1.05;
