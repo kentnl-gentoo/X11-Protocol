@@ -1,0 +1,21 @@
+Auth.pm					Read .Xauthority files
+Changes					List of changes from previous versions
+Keysyms.pm				Names of keysyms (like keysymdef.h)
+MANIFEST				List of files
+Makefile.PL				Source for Makefile
+Protocol.pm				The X11 Window System Protocol
+Protocol/Connection.pm			Base class for connections
+Protocol/Connection/FileHandle.pm	Base class for FileHandle connections
+Protocol/Connection/INETFH.pm		TCP/IP FileHandle connections
+Protocol/Connection/INETSocket.pm	TCP/IP IO::Socket connections
+Protocol/Connection/Socket.pm		Base class for IO:Socket connections
+Protocol/Connection/UNIXFH.pm		Unix-domain FileHandle connections
+Protocol/Connection/UNIXSocket.pm	Unix-domain IO::Socket connections
+Protocol/Ext/BIG_REQUESTS.pm		BIG-REQUESTS extension
+Protocol/Ext/SHAPE.pm			SHAPE extension
+README					The Instructions
+Todo					The Wishlist
+eg/anim.pl				Animated example
+eg/full_test.pl				Exhaustive test of Protocol.pm et al.
+eg/teletype.pl				Two-display example
+test.pl					Short test of Protocol.pm et al.

@@ -1,0 +1,18 @@
+Revision history for Perl module X11::Protocol.
+
+0.01  Tue Dec 31 1996
+	- original version; created by h2xs 1.18
+	- as seen briefly on c.l.p.m
+
+0.02  Tue Jul 29 1997
+	- first CPAN release
+	- changed pack("Ii") to "Ll", for Alphas, etc
+	- added next_event(), as suggested by Brian Wheeler
+	- reworked event handling, based on work by Brian Wheeler
+	- added X11::Auth, ditched xauth(1)
+	- added README
+	- changed format of $x->pixmap_formats based on a closer reading
+	  of the spec
+	- $x->visuals now corresponds to documentation	
+	- moved Connection::* and Ext::* under X11::Protocol::
+	- random cleanup

@@ -1,0 +1,78 @@
+X11::Protocol, version 0.02
+
+Copyright (C) 1997 Stephen McCamant. All rights reserved. This program
+is free software; you can redistribute and/or modify it under the same
+terms as Perl itself. (As an exception, the file Keysyms.pm, which is
+derived from a file in the standard X11 distribution, has another,
+less restrictive copying policy; see that file for details).
+
+Module list information:123456789 123456789 123456789 123456789 12345
+X11::Protocol	adpO	Raw interface to X Window System servers
+X11::Keysyms	adpf	X11 key symbols (translation of keysymdef.h)
+X11::Auth	adpO	Read and handle X11 '.Xauthority' files
+
+X11::Protocol and the related modules in this distribution are a rough
+equivalent of Xlib (libX11.a, with a bit of Xau and Xext mixed in)
+used for drawing windows on and otherwise manipulating X11 window
+servers.
+
+OTHER THINGS YOU NEED
+
+* perl 5.002	(not tested recently; 5.004 is recommended)
+
+* an X11 server (any version; it also doesn't have to be on the same
+		 computer, but you must be able to connect to it
+		 over a socket)
+
+* documentation about the X protocol (or at least Xlib)
+O'Reilly has a good book, and the full X distribution includes the
+definitive specification (see ftp://ftp.x.org/, or the xbooks package
+for Debian Linux users)
+
+	 *********************** NOTE ***********************
+
+* This module's interface is admittedly a little cumbersome, but its low
+level approach is intentional -- the author is working on a
+higher-level interface, which will be more object-oriented and easier
+to use, and allow this low level to eventually be replaced by an XS
+interface to Xlib.
+
+* This is an alpha release, so the interface is subject to change. This
+means that you should tell the author if you find some part
+particularly ugly, but you also shouldn't start any large projects
+using this module without being prepared to change in the future.
+
+	 ****************************************************
+BUILDING
+
+Like any other module:
+% perl Makefile.PL
+% make
+% make test
+% make install
+
+DOCUMENTATION
+
+See the PODs at the end of each .pm file (converted into man pages by
+the makefile) for detailed information.
+
+EXAMPLES
+
+test.pl is a good example of a complete program; it's also a
+translation of an Xlib based program (in this case, `basicwin' from
+O'Reilly & Associates's _Xlib Programming Manual_).
+
+eg/teletype.pl shows how it's possible to connect to more than one
+server at once (needs IO::Select).
+
+eg/anim.pl demonstrates buffered animation, and is just generally
+cool (needs IO::Select).
+
+eg/full_test.pl uses just about every request in the protocol. You
+probably shouldn't run it, since it can do weird things to your
+display, but it can show prototype calls if the documentation is
+unclear.
+
+
+Send questions, bug reports, and feature requests to me, Stephen
+McCamant <alias@mcs.com>.
