@@ -17,8 +17,7 @@ use vars qw($VERSION @ISA);
 
 $VERSION = 0.01;
 
-sub open
-  {
+sub open {
     my($pkg) = shift;
     my($host, $dispnum) = @_;
     my($sock) = IO::Socket::INET->new('PeerAddr' => $host,
@@ -28,7 +27,7 @@ sub open
     croak "Can't connect to display `$host:$dispnum': $!" unless $sock;
     $sock->autoflush(1);
     return bless \$sock, $pkg;
-  }
+}
 1;
 __END__
 
@@ -51,7 +50,7 @@ with a server over a TCP/IP connection, using the IO::Socket::INET module.
 
 =head1 AUTHOR
 
-Stephen McCamant <alias@mcs.com>.
+Stephen McCamant <SMCCAM@cpan.org>.
 
 =head1 SEE ALSO
 

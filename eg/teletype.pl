@@ -53,53 +53,41 @@ $x2->CreateGC($gc2, $win2, 'foreground' => $x2->black_pixel, 'font' => $fnt2,
 
 $i = $x1->min_keycode;
 for $ar ($x1->GetKeyboardMapping($x1->min_keycode,
-				 $x1->max_keycode - $x1->min_keycode + 1))
-  {
+				 $x1->max_keycode - $x1->min_keycode + 1)) {
     $table[0][$i++] = [map($keysyms_name{$_}, @$ar)];
-  }
+}
 
 $i = $x2->min_keycode;
 for $ar ($x2->GetKeyboardMapping($x2->min_keycode,
-				 $x2->max_keycode - $x2->min_keycode + 1))
-  {
+				 $x2->max_keycode - $x2->min_keycode + 1)) {
     $table[1][$i++] = [map($keysyms_name{$_}, @$ar)];
-  }
+}
 
-sub print_event
-  {
+sub print_event {
     my($disp, $win, $gc, $font, $t, %e) = @_;
-    if ($e{name} eq "KeyPress")
-      {
+    if ($e{name} eq "KeyPress") {
 	my($key) = $t->[$e{detail}][0];
 	exit if $key eq "q" or $key eq "Q";
 	$disp->PolyText8($win, $gc, ($e{event_x}, $e{event_y}), [0, $key]);
-	# Might be neat to do a WarpPointer here to facilitate typing 
-	# strings of characters.
-      }
-    elsif ($e{name} eq "ButtonPress")
-      {
+	(my $key16 = $key) =~ s/(.)/\0$1/g;;	
+	my $dx = {$disp->QueryTextExtents($font, $key16)}->{'overall_width'};
+	$disp->WarpPointer(0, 0, 0, 0, 0, 0, $dx, 0);
+    } elsif ($e{name} eq "ButtonPress") {
 	$disp->PolyPoint($win, $gc, 'Origin', ($e{event_x}, $e{event_y}));
-      }
-    elsif ($e{name} eq "Expose")
-      {
+    } elsif ($e{name} eq "Expose") {
 	$disp->PolyRectangle($win, $gc, [($e{'x'}, $e{'y'}), $e{width},
 			     $e{height}]);
-      }
-    else
-      {
-      }
-  }
+    }
+}
 
 $x1->event_handler(sub {print_event($x2, $win2, $gc2, $fnt2, $table[1], @_)});
 $x2->event_handler(sub {print_event($x1, $win1, $gc1, $fnt1, $table[0], @_)});
 
 $sel = IO::Select->new($x1->connection->fh, $x2->connection->fh);
 
-for (;;)
-  {
-    for $fh ($sel->can_read)
-      {
+for (;;) {
+    for $fh ($sel->can_read) {
 	$x1->handle_input if $fh == $x1->connection->fh;
 	$x2->handle_input if $fh == $x2->connection->fh;
-      }
-  }
+    }
+}

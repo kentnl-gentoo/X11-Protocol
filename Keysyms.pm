@@ -56,8 +56,7 @@ package X11::Keysyms;
 use Carp;
 $VERSION = 0.01;
 
-sub import
-{
+sub import {
     my($pkg, $var, @x) = @_;
     my($into) = caller();
 
@@ -65,12 +64,9 @@ sub import
     $var =~ s/^%//;
 
     my(%KL);
-    if (@x)
-    {
+    if (@x) {
 	@KL{@x} = (1) x @x;
-    }
-    else
-    {
+    } else {
 	@KL{'MISCELLANY', 'XKB_KEYS', 'LATIN1', 'LATIN2', 'LATIN3', 'LATIN4',
 	    'GREEK'} = (1) x 7;
     }
@@ -1647,7 +1643,7 @@ is used.
 =head1 AUTHOR
 
 This module was generated semi-automatically by Stephen McCamant
-(<alias@mcs.com>) from the header file 'X11/keysymdef.h', distributed by the
+(<SMCCAM@cpan.org>) from the header file 'X11/keysymdef.h', distributed by the
 X Consortium.
 
 =head1 SEE ALSO

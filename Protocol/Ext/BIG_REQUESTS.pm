@@ -18,36 +18,34 @@ use vars '$VERSION';
 
 $VERSION = 0.01;
 
-sub new
-{
-  my($pkg, $x, $request_num, $event_num, $error_num) = @_;
-  my($self) = {};
+sub new {
+    my($pkg, $x, $request_num, $event_num, $error_num) = @_;
+    my($self) = {};
 
-  # Constants
-  
-  # Events
-
-  # Requests
-  $x->{'ext_request'}{$request_num} = 
-    [
-     ["BigReqEnable", sub {
-       my($self) = shift;
-       return "";
-     }, sub {
-       my($self) = shift;
-       my($data) = @_;
-       my($max_len) = unpack("xxxxxxxxIxxxxxxxxxxxxxxxxxxxx", $data);
-       return ($max_len);
-     }]
-    ];
-  my($i);
-  for $i (0 .. $#{$x->{'ext_request'}{$request_num}})
-    {
-      $x->{'ext_request_num'}{$x->{'ext_request'}{$request_num}[$i][0]} =
-	[$request_num, $i];
+    # Constants
+    
+    # Events
+    
+    # Requests
+    $x->{'ext_request'}{$request_num} = 
+      [
+       ["BigReqEnable", sub {
+	    my($self) = shift;
+	    return "";
+	}, sub {
+	    my($self) = shift;
+	    my($data) = @_;
+	    my($max_len) = unpack("xxxxxxxxIxxxxxxxxxxxxxxxxxxxx", $data);
+	    return ($max_len);
+	}]
+      ];
+    my($i);
+    for $i (0 .. $#{$x->{'ext_request'}{$request_num}}) {
+	$x->{'ext_request_num'}{$x->{'ext_request'}{$request_num}[$i][0]} =
+	  [$request_num, $i];
     }
-  $x->{'maximum_request_length'} = $x->req('BigReqEnable');
-  return bless $self, $pkg;
+    $x->{'maximum_request_length'} = $x->req('BigReqEnable');
+    return bless $self, $pkg;
 }
 
 1;
@@ -73,7 +71,7 @@ C<$x-E<gt>maximum_request_length>.
 
 =head1 AUTHOR
 
-Stephen McCamant <alias@mcs.com>.
+Stephen McCamant <SMCCAM@cpan.org>.
 
 =head1 SEE ALSO
 

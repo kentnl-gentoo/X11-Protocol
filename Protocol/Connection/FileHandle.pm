@@ -16,34 +16,30 @@ use X11::Protocol::Connection;
 
 $VERSION = 0.01;
 
-sub give
-  {
+sub give {
     my($self) = shift;
     my($msg) = @_;
     my($fh) = $$self;
     $fh->print($msg) or croak $!;
-  }
+}
 
-sub get
-  {
+sub get {
     my($self) = shift;
     my($len) = @_;
     my($x, $n, $o) = ("", 0, 0);
     my($fh) = $$self;
-    until ($o == $len)
-    {
+    until ($o == $len) {
 	$n = read $fh, $x, $len - $o, $o;
 	croak $! unless defined $n;
 	$o += $n;
     }
     return $x;
-  }
+}
 
-sub fh
-  {
+sub fh {
     my($self) = shift;
     return $$self;
-  }
+}
 
 1;
 __END__
@@ -67,7 +63,7 @@ to a FileHandle.
 
 =head1 AUTHOR
 
-Stephen McCamant <alias@mcs.com>.
+Stephen McCamant <SMCCAM@cpan.org>.
 
 =head1 SEE ALSO
 

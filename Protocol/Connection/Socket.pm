@@ -2,7 +2,7 @@
 
 package X11::Protocol::Connection::Socket;
 
-# Copyright (C) 1997 Stephen McCamant. All rights reserved. This program
+# Copyright (C) 1997, 1999 Stephen McCamant. All rights reserved. This program
 # is free software; you can redistribute and/or modify it under the same
 # terms as Perl itself.
 
@@ -16,34 +16,30 @@ use X11::Protocol::Connection;
 
 $VERSION = 0.01;
 
-sub give
-  {
+sub give {
     my($self) = shift;
     my($msg) = @_;
     my($sock) = $$self;
     $sock->write($msg, length($msg)) or croak $!;
-  }
+}
 
-sub get
-  {
+sub get {
     my($self) = shift;
     my($len) = @_;
     my($x, $n, $o) = ("", 0, 0);
     my($sock) = $$self;
-    until ($o == $len)
-    {
+    until ($o == $len) {
 	$n = $sock->read($x, $len - $o, $o);
 	croak $! unless defined $n;
 	$o += $n;
     }
     return $x;
-  }
+}
 
-sub fh
-  {
+sub fh {
     my($self) = shift;
     return $$self;
-  }
+}
 
 1;
 __END__
@@ -67,7 +63,7 @@ IO::Socket.
 
 =head1 AUTHOR
 
-Stephen McCamant <alias@mcs.com>.
+Stephen McCamant <SMCCAM@cpan.org>.
 
 =head1 SEE ALSO
 

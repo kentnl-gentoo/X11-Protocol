@@ -2,89 +2,75 @@
 
 package X11::Protocol;
 
-# Copyright (C) 1997, 1998 Stephen McCamant. All rights reserved. This
-# program is free software; you can redistribute and/or modify it
-# under the same terms as Perl itself.
+# Copyright (C) 1997, 1998, 1999, 2000 Stephen McCamant. All rights
+# reserved. This program is free software; you can redistribute and/or
+# modify it under the same terms as Perl itself.
 
 use Carp;
 use strict;
 use vars qw($VERSION $AUTOLOAD @ISA @EXPORT_OK);
-use X11::Auth;
 require Exporter;
 
 @ISA = ('Exporter');
 
 @EXPORT_OK = qw(pad padding padded hexi make_num_hash default_error_handler);
 
-$VERSION = 0.04;
+$VERSION = "0.50";
 
-sub pad ($) 
-{
+sub padding ($) {
+    my($x) = @_;
+    -$x & 3;
+}
+
+sub pad ($)  {
     my($x) = @_;
     padding(length($x));
 }
 
-sub padding ($)
-{
-    my($x) = @_;
-    (4 - ($x % 4)) % 4;
+sub padded ($) {
+    my $l = length($_[0]);
+    "a" . $l . "x" x (-$l & 3);
 }
 
-sub hexi ($)
-{
+sub hexi ($) {
     "0x" . sprintf("%x", $_[0]);
 }
 
-sub padded ($)
-{
-    my($x) = @_;
-    "a" . length($x) . "x" x pad($x); 
-}
 
-length(pack("L", 0)) == 4 or croak "sizeof(int) != 4";
+length(pack("L", 0)) == 4 or croak "can't happen";
 
 my($Byte_Order, $Card16, $Int16, $Card8, $Int8);
 
-if (pack("L", 1) eq "\0\0\0\1")
-{
+if (pack("L", 1) eq "\0\0\0\1") {
     $Byte_Order = 'B';
     $Int8 = "xxxc";
     $Card8 = "xxxC";
     $Int16 = "xxs";
     $Card16 = "xxS";
-}
-elsif (pack("L", 1) eq "\1\0\0\0")
-{
+} elsif (pack("L", 1) eq "\1\0\0\0") {
     $Byte_Order = 'l';
     $Int8 = "cxxx";
     $Card8 = "Cxxx";
     $Int16 = "sxx";
     $Card16 = "Sxx";
-}
-else
-{
+} else {    
     croak "Can't determine byte order!\n";
 }
 
 my($Default_Display);
 
-if ($^O eq "MSWin32")
-{
+if ($^O eq "MSWin32") {
     $Default_Display = "localhost";
-}
-else
-{
+} else {    
     $Default_Display = "unix";
 }
 
-sub give
-{
+sub give {
     my($self) = shift;
     $self->{'connection'}->give(@_);
 }
 
-sub get
-{
+sub get {
     my($self) = shift;
     return $self->{'connection'}->get(@_);
 }
@@ -194,15 +180,13 @@ my(%Const) =
 
 my(%Const_num) = (); # Filled in dynamically
 
-sub interp
-{
+sub interp {
     my($self) = shift;
     return $_[1] unless $self->{'do_interp'};
     return $self->do_interp(@_);
 }
 
-sub do_interp
-{
+sub do_interp {
     my $self = shift;
     my($type, $num) = @_;
     carp "Unknown constant type `$type'\n"
@@ -212,16 +196,14 @@ sub do_interp
     return $self->{'const'}{$type}[$num] || $self->{'ext_const'}{$type}[$num];
 }
 
-sub make_num_hash
-{
+sub make_num_hash {
     my($from) = @_;
     my(%hash);
     @hash{@$from} = (0 .. $#{$from});
     return %hash;
 }
 
-sub num ($$)
-{
+sub num ($$) {
     my($self) = shift;
     my($type, $x) = @_;
     carp "Unknown constant type `$type'\n"
@@ -229,59 +211,54 @@ sub num ($$)
           or exists $self->{'ext_const'}{$type};
     $self->{'const_num'}{$type} = {make_num_hash($self->{'const'}{$type})}
 	unless exists $self->{'const_num'}{$type};
-    if (exists $self->{'const_num'}{$type}{$x})
-    {
+    if (exists $self->{'const_num'}{$type}{$x}) {
 	return $self->{'const_num'}{$type}{$x};
-    }
-    elsif (exists $self->{'ext_const_num'}{$type}{$x})
-    {
+    } elsif (exists $self->{'ext_const_num'}{$type}{$x}) {
 	return $self->{'ext_const_num'}{$type}{$x};
-    }
-    else
-    {
+    } else {
 	return $x;
     }
 }
 
 my(@Attributes_ValueMask) = 
-(["background_pixmap", sub {$_[1] = 0 if $_[1] eq "None";
-			    $_[1] = 1 if $_[1] eq "ParentRelative";
-			    pack "L", $_[1];}],
- ["background_pixel", sub {pack "L", $_[1];}],
- ["border_pixmap", sub {$_[1] = 0 if $_[1] eq "CopyFromParent";
-			pack "L", $_[1];}],
- ["border_pixel", sub {pack "L", $_[1];}], 
- ["bit_gravity", sub {$_[1] = $_[0]->num('BitGravity', $_[1]);
-		      pack $Card8, $_[1];}],
- ["win_gravity", sub {$_[1] = $_[0]->num('WinGravity', $_[1]);
-		      pack $Card8, $_[1];}],
- ["backing_store", sub {$_[1] = 0 if $_[1] eq "NotUseful";
-			$_[1] = 1 if $_[1] eq "WhenMapped";
-			$_[1] = 2 if $_[1] eq "Always";
+  (["background_pixmap", sub {$_[1] = 0 if $_[1] eq "None";
+			      $_[1] = 1 if $_[1] eq "ParentRelative";
+			      pack "L", $_[1];}],
+   ["background_pixel", sub {pack "L", $_[1];}],
+   ["border_pixmap", sub {$_[1] = 0 if $_[1] eq "CopyFromParent";
+			  pack "L", $_[1];}],
+   ["border_pixel", sub {pack "L", $_[1];}], 
+   ["bit_gravity", sub {$_[1] = $_[0]->num('BitGravity', $_[1]);
 			pack $Card8, $_[1];}],
- ["backing_planes", sub {pack "L", $_[1];}],
- ["backing_pixel", sub {pack "L", $_[1];}],
- ["override_redirect", sub {pack $Card8, $_[1];}],
- ["save_under", sub {pack $Card8, $_[1];}],
- ["event_mask", sub {pack "L", $_[1];}],
- ["do_not_propagate_mask", sub {pack "L", $_[1];}],
- ["colormap", sub {$_[1] = 0 if $_[1] eq "CopyFromParent";
-		   pack "L", $_[1];}],
- ["cursor", sub {$_[1] = 0 if $_[1] eq "None";
-		 pack "L", $_[1];}]);
+   ["win_gravity", sub {$_[1] = $_[0]->num('WinGravity', $_[1]);
+			pack $Card8, $_[1];}],
+   ["backing_store", sub {$_[1] = 0 if $_[1] eq "NotUseful";
+			  $_[1] = 1 if $_[1] eq "WhenMapped";
+			  $_[1] = 2 if $_[1] eq "Always";
+			  pack $Card8, $_[1];}],
+   ["backing_planes", sub {pack "L", $_[1];}],
+   ["backing_pixel", sub {pack "L", $_[1];}],
+   ["override_redirect", sub {pack $Card8, $_[1];}],
+   ["save_under", sub {pack $Card8, $_[1];}],
+   ["event_mask", sub {pack "L", $_[1];}],
+   ["do_not_propagate_mask", sub {pack "L", $_[1];}],
+   ["colormap", sub {$_[1] = 0 if $_[1] eq "CopyFromParent";
+		     pack "L", $_[1];}],
+   ["cursor", sub {$_[1] = 0 if $_[1] eq "None";
+		   pack "L", $_[1];}]);
 
 my(@Configure_ValueMask) =
-(["x", sub {pack $Int16, $_[1];}],
- ["y", sub {pack $Int16, $_[1];}],
- ["width", sub {pack $Card16, $_[1];}],
- ["height", sub {pack $Card16, $_[1];}],
- ["border_width", sub {pack $Card16, $_[1];}],
- ["sibling", sub {pack "L", $_[1];}],
- ["stack_mode", sub {$_[1] = $_[0]->num('StackMode', $_[1]);
-		     pack $Card8, $_[1];}]);
+  (["x", sub {pack $Int16, $_[1];}],
+   ["y", sub {pack $Int16, $_[1];}],
+   ["width", sub {pack $Card16, $_[1];}],
+   ["height", sub {pack $Card16, $_[1];}],
+   ["border_width", sub {pack $Card16, $_[1];}],
+   ["sibling", sub {pack "L", $_[1];}],
+   ["stack_mode", sub {$_[1] = $_[0]->num('StackMode', $_[1]);
+		       pack $Card8, $_[1];}]);
 
 my(@GC_ValueMask) =
-    (['function', sub {
+  (['function', sub {
 	$_[1] = $_[0]->num('GCFunction', $_[1]);
 	$_[1] = pack($Card8, $_[1]);
     }, sub {}],
@@ -474,8 +451,7 @@ my(@Events) =
     'first_keycode', 'count']
     );
 
-sub unpack_event
-{
+sub unpack_event {
     my $self = shift;
     my($data) = @_;
     my($code, $detail, $seq) = unpack("CCS", substr($data, 0, 4));
@@ -488,36 +464,24 @@ sub unpack_event
     my($info);
     $info = $self->{'events'}[$code] || $self->{'ext_events'}[$code];
 
-    if ($info)
-    {
+    if ($info) {
 	my(@i) = @$info;
-	if (ref $i[0] eq "CODE")
-	{
+	if (ref $i[0] eq "CODE") {
 	    %ret = &{$i[0]}($self, $data, %ret);
-	}
-	else
-	{
+	} else {
 	    my($format, @fields) = @i;
 	    my(@unpacked) = unpack($format, $data);
 	    my($f);
 	    for $f (@fields) {
-		if (not ref $f)
-		{
+		if (not ref $f) {
 		    $ret{$f} = shift @unpacked;
-		}
-		else
-		{
+		} else {
 		    my(@f) = @$f;
-		    if (ref $f[0] eq "CODE" or ref $f[1] eq "CODE")
-		    {
+		    if (ref $f[0] eq "CODE" or ref $f[1] eq "CODE") {
 			&{$f[0]}(\%ret) if $f[0];
-		    }
-		    elsif (not ref $f[1])
-		    {
+		    } elsif (not ref $f[1]) {
 			$ret{$f[0]} = $self->interp($f[1], shift @unpacked);
-		    }
-		    else
-		    {
+		    } else {
 			my($v) = shift @unpacked;
 			$v = $f[1][$v] if $self->{'do_interp'} and 
 			    ($v == 0 or $v == 1 && $f[1][1]);
@@ -526,17 +490,14 @@ sub unpack_event
 		}
 	    }
 	}
-    }
-    else
-    {
+    } else {
         carp "Unknown event (code $code)!";
         $ret{'data'} = $data;
     }
     return %ret;
 }
 
-sub pack_event
-{
+sub pack_event {
     my $self = shift;
     my(%h) = @_;
     my($code) = $h{code};
@@ -547,36 +508,24 @@ sub pack_event
     my($do_seq) = 1;
     $info = $self->{'events'}[$code] || $self->{'ext_events'}[$code];
 
-    if ($info)
-    {
+    if ($info) {
 	my(@i) = @$info;
-	if (ref $i[0] eq "CODE")
-	{
+	if (ref $i[0] eq "CODE") {
 	    ($data, $do_seq) = &{$i[1]}($self, %h);
-	}
-	else
-	{
+	} else {
 	    my($format, @fields) = @i;
 	    my(@topack) = ();
 	    my($f);
 	    for $f (@fields) {
-		if (not ref $f)
-		{
+		if (not ref $f) {
 		    push @topack, $h{$f};
-		}
-		else
-		{
+		} elseQ {
 		    my(@f) = @$f;
-		    if (ref $f[0] eq "CODE" or ref $f[1] eq "CODE")
-		    {
+		    if (ref $f[0] eq "CODE" or ref $f[1] eq "CODE") {
 			&{$f[1]}(\%h) if $f[1];
-		    }
-		    elsif (not ref $f[1])
-		    {
+		    } elsif (not ref $f[1]) {
 			push @topack, $self->num($f[1], $h{$f[0]});
-		    }
-		    else
-		    {
+		    } else {
 			my($v) = $h{$f[0]};
 			$v = 0 if $v eq $f[1][0];
 			$v = 1 if $v eq $f[1][1] and $f[1][1];
@@ -588,43 +537,36 @@ sub pack_event
 	}
 	substr($data, 2, 2) = pack("S", $h{sequence_number}) if $do_seq;
 	substr($data, 0, 1) = pack("C", $code | ($h{synthetic} ? 128 : 0));
-    }
-    else
-    {
+    } else {
         carp "Unknown event (code $code)!";
         return pack("Cxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", $code);
     }
     return $data;
 }
 
-sub unpack_event_mask
-{
+sub unpack_event_mask {
     my $self = shift;
     my($x) = @_;
     my(@ans, $i);
-    for $i (@{$Const{'EventMask'}})
-    {
+    for $i (@{$Const{'EventMask'}}) {
 	push @ans, $i if $x & 1;
 	$x >>= 1;
     }
     @ans;
 }
 
-sub pack_event_mask
-{
+sub pack_event_mask {
     my $self = shift;
     my(@x) = @_;
     my($i, $mask);
     $mask = 0;
-    for $i (@x)
-    {
+    for $i (@x) {
 	$mask |= 1 << $self->num('EventMask', $i);
     }
     return $mask;
 }
 
-sub default_error_handler
-{
+sub default_error_handler {
     my($self, $data) = @_;
     my($type, $seq, $info, $minor_op, $major_op) 
 	= unpack("xCSLSCxxxxxxxxxxxxxxxxxxxxx", $data);
@@ -635,77 +577,56 @@ sub default_error_handler
 	      " Opcode ($major_op, $minor_op) = ",
 	      ($self->do_interp('Request', $major_op)
 	      or $self->{'ext_request'}{$major_op}[$minor_op][0]), "\n");
-    if ($type == 2)
-    {
+    if ($type == 2) {
 	$t .= " Bad value $info (" . hexi($info) . ")\n";
-    }
-    elsif ($self->{'error_type'}[$type] & 1)
-    {
+    } elsif ($self->{'error_type'}[$type] & 1) {
 	$t .= " Bad resource $info (" . hexi($info) . ")\n";
     }
     croak($t);
 }
 
-sub handle_input
-{
+sub handle_input {
     my $self = shift;
     my($type_b, $type);
     $type_b = $self->get(1);
     $type = unpack "C", $type_b;
-    if ($type == 0)
-    {
+    if ($type == 0) {
 	&{$self->{'error_handler'}}($self, $type_b . $self->get(31));
 	return 0;
-    }
-    elsif ($type > 1)
-    {
-#	print STDERR "Got event -- type $type\n";
-	if ($self->{'event_handler'} eq "queue")
-	{
+    } elsif ($type > 1) {
+	if ($self->{'event_handler'} eq "queue") {
 	    push @{$self->{'event_queue'}}, $type_b . $self->get(31);
-	}
-	else
-	{
+	} else {
 	    &{$self->{'event_handler'}}
-	    ($self->unpack_event($type_b . $self->get(31)));
+	      ($self->unpack_event($type_b . $self->get(31)));
 	}
 	return -$type;
-    }
-    else # $type == 1
-    {
-#	print STDERR "Got reply\n";
+    } else {
+	# $type == 1
 	my($data) = $self->get(31);
 	my($seq, $len) = unpack "SL", substr($data, 1, 6);
-#	print STDERR "#$seq: Reading $len extra quads\n";
 	$data = join("", $type_b, $data, $self->get(4 * $len));
-	if ($self->{'replies'}->{$seq})
-	{
+	if ($self->{'replies'}->{$seq}) {
 	    ${$self->{'replies'}->{$seq}} = $data;
 	    return $seq;
-	}
-	else
-	{
+	} else {
 	    carp "Unexpected reply to request $seq",
 	    " (of $self->{'sequence_num'})"; 
-#	    print STDERR "[$data]\n";
 	    return $seq;
 	}
     }
 }
 
-sub dequeue_event
-{
+sub dequeue_event {
     my $self = shift;
     my($data) = shift @{$self->{'event_queue'}};
     return () unless $data;
     return $self->unpack_event($data);
 }
 
-sub next_event
-{
+sub next_event {
     my $self = shift;
-    if ($self->{'event_handler'} ne "queue")
-    {
+    if ($self->{'event_handler'} ne "queue") {
 	carp "Setting event_handler to 'queue' to avoid infinite loop",
 	     "in next_event()";
 	$self->{'event_handler'} = "queue";
@@ -715,15 +636,13 @@ sub next_event
     return %e;
 }
 
-sub add_reply
-{
+sub add_reply {
     my $self = shift;
     my($seq, $var) = @_;
     $self->{'replies'}->{$seq} = $var;
 }
 
-sub delete_reply
-{
+sub delete_reply {
     my $self = shift;
     my($seq) = @_;
     delete $self->{'replies'}->{$seq};
@@ -737,14 +656,12 @@ my(@Requests) =
 	$height, $border_width, %values) = @_;
      my($mask, $i, @values);
      $mask = 0;
-     for $i (0 .. 14)
-     {
-	 if (exists $values{$Attributes_ValueMask[$i][0]})
-	 {
+     for $i (0 .. 14) {
+	 if (exists $values{$Attributes_ValueMask[$i][0]}) {
 	     $mask |= (1 << $i);
 	     push @values, 
 	     &{$Attributes_ValueMask[$i][1]}
-	     ($self, $values{$Attributes_ValueMask[$i][0]});
+	       ($self, $values{$Attributes_ValueMask[$i][0]});
 	 }
      }
      $visual = 0 if $visual eq 'CopyFromParent';
@@ -759,10 +676,8 @@ my(@Requests) =
      my($wid, %values) = @_;
      my($mask, $i, @values);
      $mask = 0;
-     for $i (0 .. 14)
-     {
-	 if (exists $values{$Attributes_ValueMask[$i][0]})
-	 {
+     for $i (0 .. 14) {
+	 if (exists $values{$Attributes_ValueMask[$i][0]}) {
 	     $mask |= (1 << $i);
 	     push @values, 
 	     &{$Attributes_ValueMask[$i][1]}
@@ -857,10 +772,8 @@ my(@Requests) =
      my($wid, %values) = @_;
      my($mask, $i, @values);
      $mask = 0;
-     for $i (0 .. 6)
-     {
-	 if (exists $values{$Configure_ValueMask[$i][0]})
-	 {
+     for $i (0 .. 6) {
+	 if (exists $values{$Configure_ValueMask[$i][0]}) {
 	     $mask |= (1 << $i);
 	     push @values, 
 	     &{$Configure_ValueMask[$i][1]}
@@ -900,7 +813,7 @@ my(@Requests) =
      my $self = shift;
      my($data) = @_;
      my($root, $parent, $n)
-	 = unpack("xxxxLLLSxxxxxxxxxxxxxx", substr($data, 0, 32));
+	 = unpack("xxxxxxxxLLSxxxxxxxxxxxxxx", substr($data, 0, 32));
      
      $parent = "None" if $parent == 0 and $self->{'do_interp'};
      
@@ -1163,7 +1076,7 @@ my(@Requests) =
      my $self = shift;
      my($data) = @_;
      my($same_screen, $child, $dest_x, $dest_y) =
-	 unpack "xCxxxxLssxxxxxxxxxxxxxxxx", $data;
+	 unpack "xCxxxxxxLssxxxxxxxxxxxxxxxx", $data;
      $child = "None" if $child == 0 and $self->{'do_interp'};
      return ($same_screen, $child, $dest_x, $dest_y);
  }],
@@ -1251,13 +1164,11 @@ my(@Requests) =
      $ret{'min_bounds'} = [unpack("sssssS", $min_bounds)];
      $ret{'max_bounds'} = [unpack("sssssS", $max_bounds)];
      my($i, @char_infos, %font_props);
-     for $i (0 .. $m - 1)
-     {
+     for $i (0 .. $m - 1) {
 	 push @char_infos, [unpack("sssssS",
 				   substr($char_infos, 12 * $i, 12))];
      }
-     for $i (0 .. $n - 1)
-     {
+     for $i (0 .. $n - 1) {
 	 my($atom, $value) = unpack("LL", substr($properties, 8 * $i, 8));
 	 $font_props{$atom} = $value;
      }
@@ -1293,8 +1204,7 @@ my(@Requests) =
      my($list) = substr($data, 32);
      my(@ret, $offset, $len, $i);
      $offset = 0;
-     while ($i++ < $n)
-     {
+     while ($i++ < $n) {
 	 $len = unpack("C", substr($list, $offset, 1));
 	 push @ret, substr($list, $offset + 1, $len);
 	 $offset += $len + 1;
@@ -1332,8 +1242,7 @@ my(@Requests) =
      $ret{'min_bounds'} = [unpack("sssssS", $min_bounds)];
      $ret{'max_bounds'} = [unpack("sssssS", $max_bounds)];
      my($i, %font_props);
-     for $i (0 .. $m - 1)
-     {
+     for $i (0 .. $m - 1) {
 	 my($atom, $value) = unpack("LL", substr($properties, 8 * $i, 8));
 	 $font_props{$atom} = $value;
      }
@@ -1345,8 +1254,7 @@ my(@Requests) =
      my $self = shift;
      my(@dirs) = @_;
      my($n, $d, $path);
-     for $d (@dirs)
-     {
+     for $d (@dirs) {
 	 $d = pack("C", length $d) . $d;
 	 $n++;
      }
@@ -1364,8 +1272,7 @@ my(@Requests) =
      my($list) = substr($data, 32);
      my(@ret, $offset, $len, $i);
      $offset = 0;
-     while ($i++ < $n)
-     {
+     while ($i++ < $n) {
 	 $len = unpack("C", substr($list, $offset, 1));
 	 push @ret, substr($list, $offset + 1, $len);
 	 $offset += $len + 1;
@@ -1390,10 +1297,8 @@ my(@Requests) =
      my($gc, $drawable, %values) = @_;
      my($i, $mask, @values);
      $mask = 0;
-     for $i (0 .. $#GC_ValueMask)
-     {
-	 if (exists $values{$GC_ValueMask[$i][0]})
-	 {
+     for $i (0 .. $#GC_ValueMask) {
+	 if (exists $values{$GC_ValueMask[$i][0]}) {
 	     $mask |= (1 << $i);
 	     push @values, 
 	       &{$GC_ValueMask[$i][1]}($self, $values{$GC_ValueMask[$i][0]});
@@ -1409,10 +1314,8 @@ my(@Requests) =
      my($gc, %values) = @_;
      my($i, $mask, @values);
      $mask = 0;
-     for $i (0 .. $#GC_ValueMask)
-     {
-	 if (exists $values{$GC_ValueMask[$i][0]})
-	 {
+     for $i (0 .. $#GC_ValueMask) {
+	 if (exists $values{$GC_ValueMask[$i][0]}) {
 	     $mask |= (1 << $i);
 	     push @values, 
 	       &{$GC_ValueMask[$i][1]}($self, $values{$GC_ValueMask[$i][0]});
@@ -1427,8 +1330,7 @@ my(@Requests) =
      my(%values, $i, $mask);
      $mask = 0;
      @values{@values} = (1) x @values;
-     for $i (0 .. $#GC_ValueMask)
-     {
+     for $i (0 .. $#GC_ValueMask) {
 	 $mask |= (1 << $i) if exists $values{$GC_ValueMask[$i][0]};
      }
      return pack "LLL", $src, $dst, $mask;
@@ -1447,8 +1349,7 @@ my(@Requests) =
      my($gc, $clip_x_o, $clip_y_o, $ordering, @rects) = @_;
      $ordering = $self->num('ClipRectangleOrdering', $ordering);
      my($x);
-     for $x (@rects)
-     {
+     for $x (@rects) {
 	 $x = pack("ssSS", @$x);
      }
      return pack("Lss", $gc, $clip_x_o, $clip_y_o) . join("", @rects),
@@ -1506,8 +1407,7 @@ my(@Requests) =
      my $self = shift;
      my($drawable, $gc, @rects) = @_;
      my($rr);
-     for $rr (@rects)
-     {
+     for $rr (@rects) {
 	 $rr = pack("ssSS", @$rr);
      }
      return pack("LL", $drawable, $gc) . join("", @rects);
@@ -1517,8 +1417,7 @@ my(@Requests) =
      my $self = shift;
      my($drawable, $gc, @arcs) = @_;
      my($ar);
-     for $ar (@arcs)
-     {
+     for $ar (@arcs) {
 	 $ar = pack("ssSSss", @$ar);
      }
      return pack("LL", $drawable, $gc) . join("", @arcs);
@@ -1536,8 +1435,7 @@ my(@Requests) =
      my $self = shift;
      my($drawable, $gc, @rects) = @_;
      my($rr);
-     for $rr (@rects)
-     {
+     for $rr (@rects) {
 	 $rr = pack("ssSS", @$rr);
      }
      return pack("LL", $drawable, $gc) . join("", @rects);
@@ -1547,8 +1445,7 @@ my(@Requests) =
      my $self = shift;
      my($drawable, $gc, @arcs) = @_;
      my($ar);
-     for $ar (@arcs)
-     {
+     for $ar (@arcs) {
 	 $ar = pack("ssSSss", @$ar);
      }
      return pack("LL", $drawable, $gc) . join("", @arcs);
@@ -1581,27 +1478,19 @@ my(@Requests) =
      my $self = shift;
      my($drawable, $gc, $x, $y, @items) = @_;
      my(@i, $ir, @item, $n, $r, $items);
-     for $ir (@items)
-     {
-	 if (not ref $ir)
-	 {
+     for $ir (@items) {
+	 if (not ref $ir) {
 	     push @i, pack("CN", 255, $ir);
-	 }
-	 else
-	 {
+	 } else {
 	     @item = @$ir;
 	     $n = 0;
 	     $r = length($item[1]);
-	     while ($r > 0)
-	     {
-		 if ($r >= 254)
-		 {
+	     while ($r > 0) {
+		 if ($r >= 254) {
 		     push @i, pack("Cc", 254, 0) . substr($item[1], $n, 254);  
 		     $n += 254;
 		     $r -= 254;
-		 }
-		 else
-		 {
+		 } else {
 		     push @i, pack("Cc", $r, $item[0]) . substr($item[1], $n);
 		     $n += $r; # Superfluous
 		     $r = 0; # $r -= $r would be more symmetrical
@@ -1617,27 +1506,19 @@ my(@Requests) =
      my $self = shift;
      my($drawable, $gc, $x, $y, @items) = @_;
      my(@i, $ir, @item, $n, $r, $items);
-     for $ir (@items)
-     {
-	 if (not ref $ir)
-	 {
+     for $ir (@items) {
+	 if (not ref $ir) {
 	     push @i, pack("CN", 255, $ir);
-	 }
-	 else
-	 {
+	 } else {
 	     @item = @$ir;
 	     $n = 0;
 	     $r = length($item[1]);
-	     while ($r > 0)
-	     {
-		 if ($r >= 508)
-		 {
+	     while ($r > 0) {
+		 if ($r >= 508) {
 		     push @i, pack("Cc", 254, 0) . substr($item[1], $n, 508);  
 		     $n += 508;
 		     $r -= 508;
-		 }
-		 else
-		 {
+		 } else {
 		     push @i, pack("Cc", $r / 2, $item[0]) 
 			 . substr($item[1], $n);
 		     $n += $r; # Unnecessary
@@ -1761,19 +1642,13 @@ my(@Requests) =
      my $self = shift;
      my($cmap, @actions) = @_;
      my($l, @l);
-     for $l (@actions)
-     {
+     for $l (@actions) {
 	 @l = @$l;
-	 if (@l == 4)
-	 {
+	 if (@l == 4) {
 	     $l = pack("LSSSCx", @l, 7);
-	 }
-	 elsif (@l == 5)
-	 {
+	 } elsif (@l == 5) {
 	     $l = pack("LSSSCx", @l);
-	 }
-	 else
-	 {
+	 } else {
 	     croak "Wrong # of items in arg to StoreColors";	 
 	 }
      }
@@ -1796,8 +1671,7 @@ my(@Requests) =
      my($data) = @_;
      my($n) = unpack("xxxxxxxxSxxxxxxxxxxxxxxxxxxxxxx", substr($data, 0, 32));
      my($i, @colors);
-     for $i (0 .. $n - 1)
-     {
+     for $i (0 .. $n - 1) {
 	 push @colors, [unpack("SSSxx", substr($data, 32 + 8 * $i, 8))];
      }
      return @colors;
@@ -1824,7 +1698,7 @@ my(@Requests) =
  ['CreateGlyphCursor', sub {
      my $self = shift;
      my($cid, $src_fnt, $mask_fnt, $src_ch, $mask_ch, $fr, $fg, $fb, $br,
-	$bg, $bb) = @_;;
+	$bg, $bb) = @_;
      $mask_fnt = 0 if $mask_fnt eq "None";
      return pack("LLLSSSSSSSS", $cid, $src_fnt, $mask_fnt, $src_ch, $mask_ch,
 		 $fr, $fg, $fb, $br, $bg, $bb);
@@ -1878,8 +1752,7 @@ my(@Requests) =
      my($list) = substr($data, 32);
      my(@ret, $offset, $len, $i);
      $offset = 0;
-     while ($i++ < $num)
-     {
+     while ($i++ < $num) {
 	 $len = unpack("C", substr($list, $offset, 1));
 	 push @ret, substr($list, $offset + 1, $len);
 	 $offset += $len + 1;
@@ -1891,8 +1764,7 @@ my(@Requests) =
      my $self = shift;
      my($first, $m, @info) = @_;
      my($ar);
-     for $ar (@info)
-     {
+     for $ar (@info) {
 	 $ar = pack("L$m", @{$ar}[0 .. $m - 1]);
      }
      return pack("CCxx", $first, $m) . join("", @info), scalar(@info);
@@ -1907,8 +1779,7 @@ my(@Requests) =
      my($data) = @_;
      my($n,$l) = unpack("xCxxLxxxxxxxxxxxxxxxxxxxxxxxx", substr($data, 0, 32));
      my(@ret, $i);
-     for $i (0 .. $l/$n - 1)
-     {
+     for $i (0 .. $l/$n - 1) {
 	 push @ret, [unpack("L$n", substr($data, 32 + $i * $n * 4))];
      }
      return @ret;
@@ -1919,10 +1790,8 @@ my(@Requests) =
      my(%values) = @_;
      my($mask, $i, @values);
      $mask = 0;
-     for $i (0 .. 7)
-     {
-	 if (exists $values{$KeyboardControl_ValueMask[$i][0]})
-	 {
+     for $i (0 .. 7) {
+	 if (exists $values{$KeyboardControl_ValueMask[$i][0]}) {
 	     $mask |= (1 << $i);
 	     push @values, 
 	     &{$KeyboardControl_ValueMask[$i][1]}
@@ -2014,8 +1883,7 @@ my(@Requests) =
      $mode = $self->interp('AccessMode', $mode);
      my(@ret, $fam, $off, $l);
      $off = 32;
-     while ($n-- > 0)
-     {
+     while ($n-- > 0) {
 	 ($fam, $l) = unpack("CxS", substr($data, $off, 4));
 	 $fam = $self->interp('HostFamily', $fam);
 	 push @ret, [$fam, substr($data, $off + 4, $l)];
@@ -2084,12 +1952,12 @@ my(@Requests) =
  ['SetModifierMapping', sub {
      my $self = shift;
      my(@keycodes) = @_;
+     my($n) = scalar(@{$keycodes[0]});
      my($kr);
-     for $kr (@keycodes)
-     {
-	 $kr = pack("C8", @$kr);
+     for $kr (@keycodes) {
+	 $kr = pack("C$n", @$kr, (0) x (@$kr - $n));
      }
-     return join("", @keycodes), scalar(@keycodes);
+     return join("", @keycodes), $n;
  }, sub {
      my $self = shift;
      my($data) = @_;
@@ -2105,9 +1973,8 @@ my(@Requests) =
      my($data) = @_;
      my($n) = unpack("xCxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", substr($data, 0, 32));
      my(@ret, $i);
-     for $i (0 .. $n - 1)
-     {
-	 push @ret, [unpack("C8", substr($data, 32 + 8 * $i))];
+     for $i (0 .. 7) {
+	 push @ret, [unpack("C$n", substr($data, 32 + $n * $i))];
      }
      return @ret;
  }],
@@ -2122,30 +1989,22 @@ my(@Requests) =
  }]);
 
 my($i);
-for $i (0 .. 127)
-{
-    if (ref $Requests[$i] and $Requests[$i][0])
-    {
+for $i (0 .. 127) {
+    if (ref $Requests[$i] and $Requests[$i][0]) {
 	$Const{'Request'}[$i] = $Requests[$i][0];
-    }
-    else
-    {
+    } else {
 	$Const{'Request'}[$i] = "";
     }
 }
 
-sub get_request
-{
+sub get_request {
     my $self = shift;
     my($name) = @_;
     my($major, $minor);
     $major = $self->num('Request', $name);
-    if (int($major) != 0) # Core request
-    {
+    if (int($major) != 0) { # Core request
 	return ($self->{'requests'}[$major], $major);
-    }
-    else # Extension request
-    {
+    } else { # Extension request
 	croak "Unknown request `$name'" unless
 	    exists $self->{'ext_request_num'}{$name};
 	($major, $minor) = @{$self->{'ext_request_num'}{$name}};
@@ -2154,8 +2013,7 @@ sub get_request
     }
 }
 
-sub assemble_request
-{
+sub assemble_request {
     my $self = shift;
     my($op, $args, $major, $minor) = (@_, 0);
     my($data);
@@ -2163,29 +2021,22 @@ sub assemble_request
     $minor = 0 unless defined $minor;
     my($len) = (length($data) / 4) + 1;
     croak "Request too long!\n" if $len > $self->{'maximum_request_length'};
-    if ($len <= 65535)
-    {
+    if ($len <= 65535) {
 	return pack("CCS", $major, $minor, $len) . $data;
-    }
-    else
-    {
+    } else {
 	croak "Can't happen" unless $self->{'ext'}{'BIG_REQUESTS'};
 	return pack("CCSL", $major, $minor, 0, $len) . $data;
     }
 }
 
-sub req
-{
+sub req {
     my $self = shift;
     my($name, @args) = @_;
     my($op, $major, $minor) = $self->get_request($name);
-    if (@$op == 2) # No reply
-    {
+    if (@$op == 2) { # No reply
 	$self->give($self->assemble_request($op, \@args, $major, $minor));
 	$self->{'sequence_num'}++;
-    }
-    elsif (@$op == 3) # One reply
-    {
+    } elsif (@$op == 3) { # One reply
 	my($seq, $data);
 	$self->give($self->assemble_request($op, \@args, $major, $minor));
 	$seq = $self->{'sequence_num'}++;
@@ -2193,42 +2044,31 @@ sub req
 	$self->handle_input() until $data;
 	$self->delete_reply($seq & 0xffff);
 	return &{$op->[2]}($self, $data);
-    }
-    elsif (@$op == 4) # Many replies
-    {
+    } elsif (@$op == 4) { # Many replies
 	my($seq, $data, @stuff, @ret);
 	$self->give($self->assemble_request($op, \@args, $major, $minor));
 	$seq = $self->{'sequence_num'}++;
 	$self->add_reply($seq & 0xffff, \$data);
-	for (;;)
-	{
+	for (;;) {
 	    $data = 0; $self->handle_input() until $data;
 	    @stuff = &{$op->[2]}($self, $data);
 	    last unless @stuff;
-	    if ($op->[3] eq "ARRAY")
-	    {
+	    if ($op->[3] eq "ARRAY") {
 		push @ret, [@stuff];
-	    }
-	    elsif ($op->[3] eq "HASH")
-	    {
+	    } elsif ($op->[3] eq "HASH") {
 		push @ret, {@stuff};
-	    }
-	    else
-	    {
+	    } else {
 		push @ret, @stuff;
 	    }
 	}
-	$self->delete_reply($seq & 0xfff);
+	$self->delete_reply($seq & 0xffff);
 	return @ret;
-    }
-    else
-    {
+    } else {
 	croak "Can't handle request $name";
     }
 }
 
-sub send
-{
+sub send {
     my $self = shift;
     my($name, @args) = @_;
     my($op, $major, $minor) = $self->get_request($name);
@@ -2236,72 +2076,58 @@ sub send
     return $self->{'sequence_num'}++;
 }
 
-sub unpack_reply
-{
+sub unpack_reply {
     my $self = shift;
     my($name, $data) = @_;
     my($op) = $self->get_request($name);
     return &{$op->[2]}($self, $data);
 }
 
-sub request
-{
+sub request {
     my $self = shift;
     $self->req(@_);
 }
 
-sub atom_name
-{
+sub atom_name {
     my $self = shift;
     my($num) = @_;
-    if ($self->{'atom_names'}->[$num])
-    {
+    if ($self->{'atom_names'}->[$num]) {
 	return $self->{'atom_names'}->[$num];
-    }
-    else
-    {
+    } else {
 	my($name) = $self->req('GetAtomName', $num);
 	$self->{'atom_names'}->[$num] = $name;
 	return $name;
     }
 }
 
-sub atom
-{
+sub atom {
     my $self = shift;
     my($name) = @_;
-    if (exists $self->{'atoms'}{$name})
-    {
+    if (exists $self->{'atoms'}{$name}) {
 	return $self->{'atoms'}{$name};
-    }
-    else
-    {
+    } else {
 	my($atom) = $self->req('InternAtom', $name, 0);
 	$self->{'atoms'}{$name} = $atom;
 	return $atom;
     }
 }
 
-sub choose_screen
-{
+sub choose_screen {
     my $self = shift;
     my($screen) = @_;
     my($k);
-    for $k (keys %{$self->{'screens'}[$screen]})
-    {
+    for $k (keys %{$self->{'screens'}[$screen]}) {
 	$self->{$k} = $self->{'screens'}[$screen]{$k};
     }
 }
 
-sub init_extension
-{
+sub init_extension {
     my $self = shift;
     my($name) = @_;
     my($major, $event, $error) = $self->req('QueryExtension', $name)
 	or return 0;
     $name =~ tr/-/_/;
-    unless (defined eval { require("X11/Protocol/Ext/$name.pm") })
-    {
+    unless (defined eval { require("X11/Protocol/Ext/$name.pm") }) {
 	return 0 if substr($@, 0, 30) eq "Can't locate X11/Protocol/Ext/";
 	croak($@);
     }
@@ -2310,89 +2136,66 @@ sub init_extension
 			     $pkg->new($self, $major, $event, $error)];
 }
 
-sub init_extensions
-{
+sub init_extensions {
     my $self = shift;
     my($ext);
-    for $ext ($self->req('ListExtensions'))
-    {
+    for $ext ($self->req('ListExtensions')) {
 	$self->init_extension($ext);
     }
 }
 
-sub new_rsrc
-{
+sub new_rsrc {
     my $self = shift;
-    (($self->{'rsrc_id'}++ << $self->{'rsrc_shift'}) 
+    (($self->{'rsrc_id'}++ << $self->{'rsrc_shift'})
      & $self->{'resource_id_mask'}) | $self->{'resource_id_base'};
 }
 
-sub new
-{
+sub new {
     my($class) = shift;
     my($host, $dispnum, $screen);
     my($conn, $display, $family);
-    if (@_ == 0 or $_[0] eq '')
-    {
-	if ($main::ENV{'DISPLAY'})
-	{
+    if (@_ == 0 or $_[0] eq '') {
+	if ($main::ENV{'DISPLAY'}) {
 	    $display = $main::ENV{'DISPLAY'};
-	}
-	else
-	{
+	} else {
 	    carp "Can't find DISPLAY -- guessing `$Default_Display:0'";
 	    $display = "$Default_Display:0";
 	}
-    }
-    else # (@_ >= 1)
-    {
-	if (ref $_[0])
-	{
+    } else {
+	if (ref $_[0]) {
 	    $conn = $_[0];
-	}
-	else
-	{
-	    $display = $_[0];
+	} else {
+	   $display = $_[0];
 	}
     }
 
-    unless ($conn)
-    {
+    unless ($conn) {
 	$display =~ /^(?:[^:]*?\/)?(.*):(\d+)(?:.(\d+))?$/
 	    or croak "Invalid display: `$display'\n";
 	$host = $Default_Display unless $host = $1;
 	$dispnum = $2;
 	$screen = 0 unless $screen = $3;
-	if ($] >= 5.00301) # IO::Socket is bundled
-	{
-	    if ($host eq 'unix')
-	    {
+	if ($] >= 5.00301) { # IO::Socket is bundled
+	    if ($host eq 'unix') {
 		require 'X11/Protocol/Connection/UNIXSocket.pm';
 		$conn = X11::Protocol::Connection::UNIXSocket
 		    ->open($host, $dispnum);
 		$host = 'localhost';
 		$family = 'Local';
-	    }
-	    else
-	    {
+	    } else {
 		require 'X11/Protocol/Connection/INETSocket.pm';
 		$conn = X11::Protocol::Connection::INETSocket
 		    ->open($host, $dispnum);
 		$family = 'Internet';
 	    }
-	}
-	else # Use FileHandle
-	{
-	    if ($host eq 'unix')
-	    {
+	} else { # Use FileHandle
+	    if ($host eq 'unix') {
 		require 'X11/Protocol/Connection/UNIXFH.pm';
 		$conn = X11::Protocol::Connection::UNIXFH
 		    ->open($host, $dispnum);
 		$host = 'localhost';
 		$family = 'Local';
-	    }
-	    else
-	    {
+	    } else {
 		require 'X11/Protocol/Connection/INETFH.pm';
 		$conn = X11::Protocol::Connection::INETFH
 		    ->open($host, $dispnum);
@@ -2414,17 +2217,14 @@ sub new
 
     my($auth);
 
-    if (ref($_[1]) eq "ARRAY")
-    {
+    if (ref($_[1]) eq "ARRAY") {
 	($self->{'authorization_protocol_name'},
 	 $self->{'authorization_protocol_data'}) = @{$_[1]};
-    }
-    elsif ($display and eval {require X11::Auth})
-    {
-	$auth = new X11::Auth and 
+    } elsif ($display and eval {require X11::Auth}) {
+	$auth = X11::Auth->new() and 
 	    ($self->{'authorization_protocol_name'},
 	     $self->{'authorization_protocol_data'})
-		= $auth->get_by_host($host, $family, $dispnum);
+		= ($auth->get_by_host($host, $family, $dispnum), "", "");
     }
 
     $self->give(pack("A2 SSSS xx" .
@@ -2439,19 +2239,14 @@ sub new
 		      $self->{'authorization_protocol_data'}));
 
     my($ret) = ord($self->get(1));
-    if ($ret == 0)
-    {
+    if ($ret == 0) {
 	my($len, $major, $minor, $xlen) = unpack("CSSS", $self->get(7));
 	my($reason) = $self->get($xlen * 4);
 	croak("Connection to server failed -- (version $major.$minor)\n",
 	      substr($reason, 0, $len));
-    }
-    elsif ($ret == 2)
-    {
+    } elsif ($ret == 2) {
 	croak("FIXME: authentication required\n");
-    }
-    elsif ($ret == 1)
-    {
+    } elsif ($ret == 1) {
 	my($major, $minor, $xlen) = unpack('xSSS', $self->get(7));
 	($self->{'release_number'}, $self->{'resource_id_base'},
 	 $self->{'resource_id_mask'}, $self->{'motion_bufffer_size'},
@@ -2474,8 +2269,7 @@ sub new
 	
 	my($fmts) = $self->get(8 * $formats);
 	my($n, $fmt);
-	for $n (0 .. $formats - 1)
-	{
+	for $n (0 .. $formats - 1) {
 	    $fmt = substr($fmts, 8 * $n, 8);
 	    my($depth, $bpp, $pad) = unpack('CCC', $fmt);
 	    $self->{'pixmap_formats'}{$depth} = {'bits_per_pixel' => $bpp,
@@ -2483,8 +2277,7 @@ sub new
 	}
 
 	my(@screens);
-	while ($screens--)
-	{
+	while ($screens--) {
 	    my($root_wid, $def_cmap, $w_pixel, $b_pixel, $input_masks,
 	       $w_p, $h_p, $w_mm, $h_mm, $min_maps, $max_maps,
 	       $root_visual, $b_store, $s_unders, $depth, $n_depths) 
@@ -2503,12 +2296,10 @@ sub new
 		      'save_unders' => $s_unders,
 		      'current_input_masks' => $input_masks);
 	    my($nd, @depths) = ();
-	    for $nd (1 .. $n_depths)
-	    {
+	    for $nd (1 .. $n_depths) {
 		my($dep, $n_visuals) = unpack('CxSxxxx', $self->get(8));
 		my($nv, %vt, @visuals) = ();
-		for $nv (1 .. $n_visuals)
-		{
+		for $nv (1 .. $n_visuals) {
 		    my($vid, $class, $bits_per_rgb, $map_ent, $red_mask,
 		       $green_mask, $blue_mask)
 			= unpack('LCCSLLLxxxx', $self->get(24));
@@ -2540,37 +2331,30 @@ sub new
 	$self->choose_screen($screen) if defined($screen)
 	    and $screen <= $#{$self->{'screens'}};
 	$self->{'do_interp'} = 1;
-    }
-    else
-    {
+    } else {
 	croak("Unknown response");
     }
     return $self;
 }
 
-sub AUTOLOAD
-{
+sub AUTOLOAD {
     my($name) = $AUTOLOAD;
     $name =~ s/^.*:://;
     return if $name eq "DESTROY"; # Avoid problems during final cleanup
-    if ($name =~ /^[A-Z]/) # Protocol request
-    {
+    if ($name =~ /^[A-Z]/) { # Protocol request
 	my($obj) = shift;
 	my(@ret) = $obj->req($name, @_);
 
 	# Make this faster next time
 	no strict 'refs'; # This is slightly icky
 	my($op, $major, $minor) = $obj->get_request($name);
-	if (@$op == 2) # No reply
-	{
+	if (@$op == 2) { # No reply
 	    *{$AUTOLOAD} = sub {
 		my $self = shift;
 		$self->give($self->assemble_request($op, \@_, $major, $minor));
 		$self->{'sequence_num'}++;
 	    };
-	}
-	elsif (@$op == 3) # One reply
-	{
+	} elsif (@$op == 3) { # One reply
 	    *{$AUTOLOAD} = sub {
 		my $self = shift;
 		my($seq, $data);
@@ -2581,25 +2365,16 @@ sub AUTOLOAD
 		$self->delete_reply($seq);
 		return &{$op->[2]}($self, $data);
 	    };
-	}
-	else # ListFontsWithInfo
-	{
+	} else { # ListFontsWithInfo
 	    # Not worth it
 	}
 	return @ret;
-    }
-    else # Instance variable
-    {
-	if (@_ == 1)
-	{
+    } else { # Instance variable
+	if (@_ == 1) {
 	    return $_[0]->{$name};
-	}
-	elsif (@_ == 2)
-	{
+	} elsif (@_ == 2) {
 	    $_[0]->{$name} = $_[1];
-	}
-	else
-	{
+	} else {
 	    croak "No such function `$name'";
 	}
     }
@@ -3180,8 +2955,9 @@ without a lot of work.
 
   $x->StoreColors($cmap, [$pixel, $red, $green, $blue, $do_mask], ...)
 
-The 1, 2, and 4 bits in $mask are do-red, do-green, and do-blue. $mask can
-be omitted, defaulting to 7, the usual case -- change the whole color.
+The 1, 2, and 4 bits in $do_mask are do-red, do-green, and
+do-blue. $do_mask can be omitted, defaulting to 7, the usual case --
+change the whole color.
 
   $x->StoreNamedColor($cmap, $pixel, $name, $do_mask)
 
@@ -3225,7 +3001,7 @@ If the extension is not present, an empty list is returned.
   =>
   (@names)
 
-  $x->ChangeModifierMapping($first_keycode, $keysysms_per_keycode,
+  $x->ChangeKeyboardMapping($first_keycode, $keysysms_per_keycode,
 			    @keysyms)
 
   $x->GetKeyboardMapping($first_keycode, $count)
@@ -3299,8 +3075,9 @@ indicate what types of events you desire (see
 L<"pack_event_mask">). Then, set the protocol object's 'event_handler'
 to a subroutine reference that will handle the events. Alternatively,
 set 'event_handler' to 'queue', and retrieve events using
-dequeue_event(). In both cases, events are returned as a hash. For
-instance, a typical MotionNotify event might look like this:
+dequeue_event() or next_event(). In both cases, events are returned as
+a hash. For instance, a typical MotionNotify event might look like
+this:
 
   %event = ('name' => 'MotionNotify', 'sequence_number' => 12,
             'state' => 0, 'event' => 58720256, 'root' => 43,
@@ -3355,7 +3132,7 @@ into hash form. Normally, this is done automatically.
 Protocol extensions add new requests, event types, and error types to
 the protocol. Support for them is compartmentalized in modules in the
 X11::Protocol::Ext:: hierarchy. For an example, see
-L<X11::Protocol::Ext:SHAPE>. You can tell if the module has loaded an
+L<X11::Protocol::Ext::SHAPE>. You can tell if the module has loaded an
 extension by looking at
 
   $x->{'ext'}{$extension_name}
@@ -3478,7 +3255,7 @@ The protocol is too complex.
 
 =head1 AUTHOR
 
-Stephen McCamant <alias@mcs.com>.
+Stephen McCamant <SMCCAM@cpan.org>.
 
 =head1 SEE ALSO
 

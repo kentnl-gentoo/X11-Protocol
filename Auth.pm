@@ -2,9 +2,9 @@
 
 package X11::Auth;
 
-# Copyright (C) 1997 Stephen McCamant. All rights reserved. This program
-# is free software; you can redistribute and/or modify it under the same
-# terms as Perl itself.
+# Copyright (C) 1997, 1999 Stephen McCamant. All rights reserved. This
+# program is free software; you can redistribute and/or modify it
+# under the same terms as Perl itself.
 
 use Carp;
 use strict;
@@ -12,10 +12,9 @@ use vars '$VERSION';
 use FileHandle;
 require 5.000;
 
-$VERSION = 0.02;
+$VERSION = 0.03;
 
-sub new
-{
+sub new {
     my($class, $fname) = @_;
     $fname = $fname || $main::ENV{"XAUTHORITY"} || 
 	"$main::ENV{HOME}/.Xauthority";
@@ -28,32 +27,32 @@ sub new
     return $self;
 }
 
-sub open {new(@_)}
+sub open { new(@_) }
 
-sub read
-{
+sub read {
     my $self = shift;
     my($buf);
     read $self->{filehandle}, $buf, $_[0] or croak "Can't read: $!";
     return $buf;
 }
 
-sub get_one
-{
+sub get_one {
     my $self = shift;
     my(@a, $x);
 
-    if ($self->{filehandle}->eof)
-    {
+    if ($self->{filehandle}->eof) {
 	close $self->{filehandle};
 	return ();
     }
     $x = unpack("n", $self->read(2)); # Family
-    $x = {256 => 'Local', 65535 => 'Wild', 254 => 'Netname',
-	  253 => 'Krb5Principal', 252 => 'LocalHost', 0 => 'Internet',
-	  1 => 'DECnet', 2 => 'Chaos'}->{$x};
-    croak "Unknown address type!" unless defined($x);
-    push @a, $x;
+    my $type = {256 => 'Local', 65535 => 'Wild', 254 => 'Netname',
+		253 => 'Krb5Principal', 252 => 'LocalHost', 0 => 'Internet',
+		1 => 'DECnet', 2 => 'Chaos'}->{$x};
+    if (not defined($type)) {
+	warn "Error in $self->{filename}: unknown address type $x";
+	return ();
+    }
+    push @a, $type;
 
     $x = unpack("n", $self->read(2)); # Address
     push @a, $self->read($x);
@@ -70,8 +69,7 @@ sub get_one
     return @a;
 }
 
-sub get_all
-{
+sub get_all {
     my $self = shift;
     return @{$self->{data}} if $self->{data};
     my(@a, @x);
@@ -80,23 +78,26 @@ sub get_all
     return @a;
 }
 
-sub get_by_host
-{
+sub get_by_host {
     my $self = shift;
     my($host, $fam, $dpy) = @_;
-    if ($host eq "localhost" or $host eq "127.0.0.1")
-    {
+    if ($host eq "localhost" or $host eq "127.0.0.1") {
 	require Sys::Hostname;
 	$host = Sys::Hostname::hostname();
     }
     my($addr);
     $addr = gethostbyname($host) if $fam eq "Internet";
-#    print "host $host, addr $addr\n";
+    #print "host $host, addr $addr\n";
     my($d);
-    for $d ($self->get_all)
-    {
-	return ($d->[3], $d->[4]) if $dpy eq $d->[2] and $fam eq $d->[0] and 
-	    ($fam eq "Internet" && $d->[1] eq $addr or $d->[1] eq $host);
+    for $d ($self->get_all) {
+	next unless $dpy eq $d->[2];
+	next unless $fam eq $d->[0] or ($fam eq "Internet"
+					and $d->[0] eq "Local");
+	if ($fam eq "Internet" or $fam eq "Local") {
+	    if ($d->[1] eq $addr or $d->[1] eq $host) {
+		return ($d->[3], $d->[4]);
+	    }
+	}
     }
     return ();
 }
@@ -159,7 +160,8 @@ is an array ref similar to the list returned by get_one().
 
 Get authentication data for a connection of type $family to display
 $display_num on $host. If $family is 'Internet', the host will be
-translated into an appropriate address by gethostbyname().
+translated into an appropriate address by gethostbyname(). If no data
+is found, returns an empty list.
 
 =head1 COMPATIBILITY
 
@@ -181,7 +183,7 @@ calls and X11::Auth methods:
 
 =head1 AUTHOR
 
-Stephen McCamant <alias@mcs.com>
+Stephen McCamant <SMCCAM@cpan.org>
 
 =head1 SEE ALSO
 

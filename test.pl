@@ -69,6 +69,13 @@ $x->ChangeProperty($win, $x->atom('WM_CLASS'), $x->atom('STRING'),
 $font = $x->new_rsrc;
 $x->OpenFont($font, "9x15");
 
+# $cursorfont = $x->new_rsrc;
+# $x->OpenFont($cursorfont, "cursor");
+# $cursor = $x->new_rsrc;
+# $x->CreateGlyphCursor($cursor, $cursorfont, $cursorfont, 4, 5,
+# 		      (65535,65535,65535), (0,0,0));
+# $x->ChangeWindowAttributes($win, 'cursor' => $cursor);
+
 $gc = getGC($win, $font);
 
 $x->MapWindow($win);

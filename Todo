@@ -4,12 +4,8 @@
 * Use (Self|Auto)Loader to reduce startup time; would require major
   restructuring
 
-* Documentation needs more examples, better explanations.
-
-* Inline small functions in time critical places (pad*,
-  Protocol::g(et|ive))?
-
-* Change braces to Wall style
+* Documentation needs more examples, better explanations. Borrow text
+  from official protocol spec?
 
 * Real test suite
 
@@ -18,39 +14,41 @@ Porting:
 	avoid '/' as path separator; use File::something?
 
 Extensions:
-	MIT-SCREEN-SAVER
-	MIT-SHM?
-	MIT-SUNDRY-NONSTANDARD
-	Multi-Buffering
-	SYNC
-	X3D-PEX
-	XC-MISC (get list of rsrc ids from server)
-	XIE
-	XTEST
-	XFree86-*
-	Display Postscript?
-	OpenGL??
+	Done by Jay Kominek, http://www.miranda.org/~jkominek/perlwm/,
+	get his permission to include?
+		XC-MISC (get list of rsrc ids from server)
+		DPMS
+		XFree86_Misc
+	Others:
+		MIT-SCREEN-SAVER
+		MIT-SHM?
+		MIT-SUNDRY-NONSTANDARD
+		Multi-Buffering
+		SYNC
+		X3D-PEX
+		XIE
+		XTEST
+		Display Postscript?
+		OpenGL??
 
 Authentication protocols:
 	XDM-something
 	SUN-DES-1
 	MIT-KERBEROS-5
 
-Connection types:
-	What do socketless Unixes use?
-		named pipes?
-		STREAMS?
-		(shm|msg)(ctl|get|snd|rcv|read|write)(2)?
-
 Other modules:
-	X11::Xlib -- XS to libX11.a (see Ken Fox's X11-Motif stuff)
+	X11::Xlib -- XS to libX11.a
+		Ken Fox has done this as part of X11-Motif, calling it
+		X11::Lib.
 	X11::Display, X11::Window, X11::GC, etc -- more OO, more
-		intuitive interace, could be on top of Xlib (in progress)
+		intuitive interace, could be on top of Xlib
+		(was in progress, now abandoned)
 
 Long-term goals:
 	Widget library
-	PWM (like gwm, but Perl instead of WOOL)
+	Perl window manager:
+		See PerlWM, http://www.miranda.org/~jkominek/perlwm/
 
 If you have something you think should go on this list, or if you want
-to work on one or more of the above, email me (Stephen McCamant) at
-<alias@mcs.com>.
+to work on one or more of the above, I'd be happy to hear from you at
+<SMCCAM@cpan.org>.

@@ -30,3 +30,14 @@ Revision history for Perl module X11::Protocol.
 	- changed default display on Win32 from unix:0 to localhost:0
 	- fixed ORA's contatct information in pod
 	- fixed typo
+
+0.50  Sun Jan 26 2003
+	- fixed [GS]etModifierMapping to be 8 x N, not N x 8
+	- fixed doc typo re ChangeKeyboardMapping
+	- fixed TranslateCoordinates reply, thanks to Damien Neil
+	- authorization -w cleanup suggested by Harold Bamford
+	- fixed QueryTree reply, also found by Craig Agricola
+	- minor stylistic changes
+	- added more examples
+	- make Auth work in more cases (including one that can happen
+	  when SSH tunneling)

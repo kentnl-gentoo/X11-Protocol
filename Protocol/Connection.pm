@@ -12,23 +12,19 @@ use vars '$VERSION';
 
 $VERSION = 0.01;
 
-sub give
-{
+sub give {
     croak "X11 connection object doesn't support output";
 }
 
-sub get
-{
+sub get {
     croak "X11 connection object doesn't support input";
 }
 
-sub fh
-{
+sub fh {
     croak "X11 connection object is incompatible with perl filehandles";
 }
 
-sub open
-{
+sub open {
     croak "X11 connection object can't open itself";
 }
 
@@ -101,7 +97,7 @@ useful for doing select() and other such system calls.
 
 =head1 AUTHOR
 
-Stephen McCamant <alias@mcs.com>.
+Stephen McCamant <SMCCAM@cpan.org>.
 
 =head1 SEE ALSO
 

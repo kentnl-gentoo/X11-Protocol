@@ -17,8 +17,7 @@ use vars qw($VERSION @ISA);
 
 $VERSION = 0.01;
 
-sub open
-  {
+sub open {
     my($pkg) = shift;
     my($host, $dispnum) = @_;
     my($sock) = IO::Socket::UNIX->new('Type' => SOCK_STREAM(),
@@ -26,7 +25,7 @@ sub open
     croak "Can't connect to display `unix:$dispnum': $!" unless $sock;
     $sock->autoflush(1);
     return bless \$sock, $pkg;
-  }
+}
 1;
 __END__
 
@@ -50,7 +49,7 @@ using the IO::Socket::UNIX module. The host argument is ignored.
 
 =head1 AUTHOR
 
-Stephen McCamant <alias@mcs.com>.
+Stephen McCamant <SMCCAM@cpan.org>.
 
 =head1 SEE ALSO
 

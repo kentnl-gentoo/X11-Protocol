@@ -17,8 +17,7 @@ use vars qw($VERSION @ISA);
 
 $VERSION = 0.01;
 
-sub open
-  {
+sub open {
     my($pkg) = shift;
     my($host, $dispnum) = @_;
     my($sock) = new FileHandle;
@@ -27,7 +26,7 @@ sub open
       or croak "Can't connect to display `unix:$dispnum': $!";
     $sock->autoflush(1);
     return bless \$sock, $pkg;
-  }
+}
 1;
 __END__
 
@@ -51,7 +50,7 @@ using the FileHandle module. The host argument is ignored.
 
 =head1 AUTHOR
 
-Stephen McCamant <alias@mcs.com>.
+Stephen McCamant <SMCCAM@cpan.org>.
 
 =head1 SEE ALSO
 

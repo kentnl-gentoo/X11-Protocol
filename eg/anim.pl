@@ -29,8 +29,7 @@ $x->PolyFillRectangle($pm, $egc, [(0, 0), 2 * $size, 2 * $size]);
 
 $sel = IO::Select->new($x->connection->fh);
 
-sub r2p
-{
+sub r2p {
     my($x, $y) = @_;
     $x -= .5;
     $x *= .75;
@@ -93,19 +92,14 @@ $L = [[['Simple', $gc],
 	r2p(1, 1),
 	r2p(0, 1)]]];
 
-for (;;)
-{
-    for $img ($P, $E, $R, $L)
-    {
+for (;;) {
+    for $img ($P, $E, $R, $L) {
 	$r = 5;
-	while ($r < 6.25 * $size)
-	{
+	while ($r < 6.25 * $size) {
 	    @polys = ();
-	    for $poly (@$img)
-	    {
+	    for $poly (@$img) {
 		@a = ($poly->[0]);     
-		for $p (@{$poly->[1]})
-		{
+		for $p (@{$poly->[1]}) {
 		    push @{$a[1]}, $size +
 			$r * $p->[1] * sin($theta + $p->[0]);
 		    push @{$a[1]}, $size +
@@ -113,22 +107,19 @@ for (;;)
 		}
 		push @polys, [@a];
 	    }
-	    for $poly (@old_polys)
-	    {
+	    for $poly (@old_polys) {
 		$x->FillPoly($pm, $egc, $poly->[0][0], 'Origin', @{$poly->[1]})
 		    if $poly->[0][1] != $egc;
 	    }
-	    for $poly (@polys)
-	    {
+	    for $poly (@polys) {
 		$x->FillPoly($pm, $poly->[0][1], $poly->[0][0], 'Origin',
 			     @{$poly->[1]});
 	    }
 	    $x->CopyArea($pm, $win, $gc, (0, 0), 2 * $size, 2 * $size, (0, 0));
 	    
-	    # Smooths animation (under Linux, at least). Doesn't wait
-	    # for any real  period of time, just gives up our
-	    # timeslice, I think.
-	    select(undef, undef, undef, 0.00002);
+	    # On my Linux/x86 2.0, anything less than 1/100 sec causes
+	    # other things (e.g., mouse tracking) to slow down terribly. 
+	    select(undef, undef, undef, 1/99);
 	    
 	    @old_polys = @polys;
 	    $r *= 1.05;

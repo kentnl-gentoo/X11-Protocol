@@ -1,21 +1,24 @@
-X11::Protocol, version 0.04
+X11::Protocol, version 0.50
 
-Copyright (C) 1997 Stephen McCamant. All rights reserved. This program
-is free software; you can redistribute and/or modify it under the same
-terms as Perl itself. (As an exception, the file Keysyms.pm, which is
-derived from a file in the standard X11 distribution, has another,
-less restrictive copying policy; see that file for details).
+Copyright (C) 1997-2003 Stephen McCamant. All rights reserved. This
+module is free software; you can redistribute and/or modify it under
+the same terms as Perl itself. (As an exception, the file Keysyms.pm,
+which is derived from a file in the standard X11 distribution, has
+another, less restrictive copying policy; see that file for details).
 
 Module list information:123456789 123456789 123456789 123456789 12345
-X11::Protocol	adpO	Raw interface to X Window System servers
-X11::Keysyms	adpf	X11 key symbols (translation of keysymdef.h)
-X11::Auth	adpO	Read and handle X11 '.Xauthority' files
+X11::Protocol	bdpO	Raw interface to X Window System servers
+X11::Keysyms	bdpf	X11 key symbols (translation of keysymdef.h)
+X11::Auth	bdpO	Read and handle X11 '.Xauthority' files
 
-New in this version: 0.04  Thu Jan 15 1998
- - made anim.pl's letters rectangular instead of square
- - changed default display on Win32 from unix:0 to localhost:0
- - fixed ORA's contatct information in pod
- - fixed typo
+New in this version: 0.50
+- fixed [GS]etModifierMapping to be 8 x N, not N x 8
+- fixed doc typo re ChangeKeyboardMapping
+- fixed TranslateCoordinates reply, thanks to Damien Neil
+- authorization -w cleanup suggested by Harold Bamford
+- fixed QueryTree reply, also found by Craig Agricola
+- minor stylistic changes
+- added more examples
 
 X11::Protocol and the related modules in this distribution are a rough
 equivalent of Xlib (libX11.a, with a bit of Xau and Xext mixed in)
@@ -24,31 +27,35 @@ servers.
 
 OTHER THINGS YOU NEED
 
-* perl 5.002	  (not tested recently; 5.004 is recommended)
+* perl 5.002	  (not tested recently; recent versions have only been
+                   tested with 5.6.1 and 5.8.0)
 
 * an X11 server   (any version; it also doesn't have to be on the same
 		   computer, but you must be able to connect to it
 		   over a socket. For Win32 users, a free X server
-                   is offered at 
-                   http://www.microimages.com/freestuf/mix.htm )
+                   is apparently available from
+		   http://sources.redhat.com/win32-x11/ though the
+                   author hasn't tried it)
 
-* documentation about the X protocol (or at least Xlib)
-O'Reilly has a good book, and the full X distribution includes the
-definitive specification (see ftp://ftp.x.org/, or the xbooks package
-for Debian Linux users)
+* documentation about the X protocol (or at least Xlib, though its
+interface is subtly different). O'Reilly has a good book, and the full
+X distribution includes the definitive specification (see
+ftp://ftp.x.org/, currently
+ftp://ftp.x.org/pub/R6.6/xc/doc/hardcopy/XProtocol for the PostScript
+version, or the xspecs package for Debian Linux users)
 
 	 *********************** NOTE ***********************
 
 * This module's interface is admittedly a little cumbersome, but its low
-level approach is intentional -- the author is working on a
-higher-level interface, which will be more object-oriented and easier
-to use, and allow this low level to eventually be replaced by an XS
-interface to Xlib. Send email if you want to alpha-test or contribute.
+level approach is intentional -- a higher-level interface, ideally more
+object-oriented, easier to use, and plug-compatible with an XS Xlib
+interface, would be a significant different project. (A project that
+this author made an abortive start at, but is unlikely to finish any
+time soon.)
 
-* This is an alpha release, so the interface is subject to change. This
-means that you should tell the author if you find some part
-particularly ugly, but you also shouldn't start any large projects
-using this module without being prepared to change in the future.
+* The interface has become stable, though mainly through the passage
+of time rather than through extensive debugging. For better or worse,
+it probably isn't going to change much in the future.
 
 	 ****************************************************
 BUILDING
@@ -77,10 +84,54 @@ eg/anim.pl demonstrates buffered animation, and is just generally
 cool (needs IO::Select).
 
 eg/full_test.pl uses just about every request in the protocol. You
-probably shouldn't run it, since it can do weird things to your
+might not want to run it, since it can do weird things to your
 display, but it can show prototype calls if the documentation is
 unclear.
 
+eg/widgets* are four examples that all do the same thing, with
+different tools. They demonstrate all the techniques needed to
+implement two simple custom widgets, a scroll bar and a progress
+meter, with the different options available for X11 programming from
+Perl:
+ - widgets1.pl uses X11::Protocol directly.
+ - widgets2.pl uses X11::Xlib from Ken Fox's X11-Motif
+distribution. Unfortunately, even the latest alpha version of
+X11-Motif I could find is missing interfaces for all the needed Xlib
+structures, so the code has to play games with pack() to get some
+calls to work. This may mean that the example may not work correctly
+on platforms whose Xlib structures are laid out differently that the
+author's Linux x86 box.
+ - widgets3.pl is an example of how programming X11::Protocol would be
+nicer with an object-oriented interface. It's a blatant ploy to get
+someone else interested in picking up the half-finished library it
+depends on, which is not included in this distribution (email me if
+you're interested).
+ - widgets.c is a C Xlib version of the same functionality, for
+comparison.
+
+eg/wintree.pl is a small utility that acts like a cross between
+xlsclients, xwininfo, and pstree, showing the hierarchy of windows and
+their parents. Takes a window ID, or by default starts at the
+root. "-g" includes geometries, "-v" uses VT100 line drawing
+characters. Beware that it hardcodes some assumptions about how
+certain X servers encode resource IDs.
+
+SEE ALSO
+
+This is by no means the only way to put windows up on an X server from
+Perl. 
+
+* The most popular and portable windowing interface for Perl is
+Perl/Tk, available as the Tk module from CPAN.
+
+* The Motif widget set, as well as some support for other standard X
+libraries, can be accessed using the X11::Motif modules, available
+from CPAN. An alpha version is also available directly from the
+author's homepage at http://www.msen.com/~fox/X11-Motif-1.2a8.tar.gz .
+
+* Several other X widgets sets have Perl interfaces, incluing GTK (the
+Gtk module), Qt (the PerlQt module), and Sx (a simplified Athena
+wrapper, available with the similarly named module).
 
 Send questions, bug reports, and feature requests to me, Stephen
-McCamant <alias@mcs.com>.
+McCamant <SMCCAM@cpan.org>.
