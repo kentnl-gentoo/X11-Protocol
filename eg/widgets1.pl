@@ -1,11 +1,13 @@
 #!/usr/bin/perl
 use X11::Protocol;
-use X11::Constants qw(Exposure_m ButtonPress_m ButtonRelease_m ButtonMotion_m
-		      PointerMotionHint_m StructureNotify_m
-		      Expose ButtonPress ButtonRelease MotionNotify
-		      ClientMessage ConfigureNotify
-		      Convex Nonconvex InputOutput CopyFromParent Replace
-		      Origin);
+use X11::Protocol::Constants
+  qw(Exposure_m ButtonPress_m ButtonRelease_m ButtonMotion_m
+     PointerMotionHint_m StructureNotify_m
+     Expose ButtonPress ButtonRelease MotionNotify
+     ClientMessage ConfigureNotify
+     Convex Nonconvex InputOutput CopyFromParent Replace
+     Origin);
+
 use IO::Select;
 use strict;
 

@@ -41,6 +41,11 @@ sub fh {
     return $$self;
 }
 
+sub flush {
+   my($self) = shift;
+   my($fh) = $$self;
+}
+
 1;
 __END__
 

@@ -23,7 +23,7 @@ sub open {
     my($sock) = IO::Socket::UNIX->new('Type' => SOCK_STREAM(),
 				      'Peer' => "/tmp/.X11-unix/X$dispnum");
     croak "Can't connect to display `unix:$dispnum': $!" unless $sock;
-    $sock->autoflush(1);
+    $sock->autoflush(0);
     return bless \$sock, $pkg;
 }
 1;

@@ -41,6 +41,12 @@ sub fh {
     return $$self;
 }
 
+sub flush {
+    my($self) = shift;
+    my($sock) = $$self;
+    $sock->flush;
+}
+
 1;
 __END__
 

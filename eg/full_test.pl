@@ -3,7 +3,8 @@
 # This is a virtually complete test of all of the protocol's features
 # -- it was used by the author during development. It generates a lot
 # of output to STDOUT, uses a bunch of memory, and messes with your
-# display in various ways. Run it at your own risk.
+# display in various ways. (Though some of the most egregious have
+# been commented out). Run it at your own risk.
 
 use X11::Protocol 0.02;
 
@@ -48,6 +49,12 @@ sub pretty
     {
 	print $x;
     }
+}
+
+sub my_sleep {
+    my($secs) = @_;
+    $x->flush();
+    sleep($secs);
 }
 
 %opts = @ARGV;
@@ -96,9 +103,9 @@ $kid2 = $x->new_rsrc;
 $x->req('CreateWindow', $kid2, $win, 'InputOutput', $x->{'root_depth'},
 	'CopyFromParent', (100, 100), 75, 75, 4);
 $x->req('MapSubwindows', $win);
-sleep 2;
+my_sleep 2;
 $x->req('CirculateWindow', $win, "LowerHighest");
-sleep 2;
+my_sleep 2;
 $x->req('DestroySubwindows', $win);
 print join " ", $x->req('GetGeometry', $win), "\n";
 print join " ", 
@@ -134,13 +141,13 @@ for (1 .. 10)
 }
 print "Grabbing...";
 $x->req('GrabPointer', $win, 0, 0, 'Asynchronous', 'Asynchronous', $win, 0, 0);
-sleep 2;
+my_sleep 2;
 $x->req('UngrabPointer', 0);
 print "done.\n";
-sleep 2;
+my_sleep 2;
 print "Grabbing server...";
 $x->req('GrabServer');
-sleep 2;
+my_sleep 2;
 $x->req('UngrabServer');
 print "done.\n";
 print "->", join(" ", $x->req('QueryPointer', $win)), "\n";
@@ -155,7 +162,7 @@ for (1 .. 10)
     $x->req('WarpPointer', 'None', $root_wid, 0, 0, 0, 0,
 	    rand($x->{'width_in_pixels'} * .9),
 	    rand($x->{'height_in_pixels'} * .9));
-    sleep 1;
+    my_sleep 1;
 }
 print "--->", join(" ", $x->req('GetInputFocus')), "\n";
 print "---->", $x->req('QueryKeymap'), "\n";
@@ -400,7 +407,7 @@ $x->send('FreePixmap', $fg_pm);
 $x->send('FreePixmap', $mask_pm);
 $x->send('FreeGC', $cursor_gc);
 
-sleep 5;
+my_sleep 5;
 $cursor_fnt = $x->new_rsrc;
 $x->req('OpenFont', $cursor_fnt, 'cursor');
 $new_cursor = $x->new_rsrc;
@@ -414,7 +421,7 @@ for $p (0 .. 10)
 {
     $x->req('RecolorCursor', $cursor,
 	    (65535, 65535 - $p*6553.5, 65535- $p*6553.5), (0, 0, 0));
-    sleep 1;
+    my_sleep 1;
 }
 ($w, $h) = $x->req('QueryBestSize', 'Cursor', $root_wid, 16, 16);
 print "$w x $h is a good size for a cursor.\n";
@@ -426,8 +433,8 @@ for $ext ($x->req('ListExtensions'))
 }
 
 ($old) = $x->req('GetKeyboardMapping', $x->{'max_keycode'}, 1);
-$x->req('ChangeKeyboardMapping', $x->{'max_keycode'} - 1, 4, 
-	[$Keysyms{"a"}, $Keysyms{"A"}, 0, 0],);
+#$x->req('ChangeKeyboardMapping', $x->{'max_keycode'} - 1, 4, 
+#	[$Keysyms{"a"}, $Keysyms{"A"}, 0, 0],);
 
 $i = $x->min_keycode;
 for $ar ($x->req('GetKeyboardMapping', $x->{'min_keycode'}, 
@@ -439,7 +446,7 @@ for $ar ($x->req('GetKeyboardMapping', $x->{'min_keycode'},
     $i++;
 }
 
-$x->req('ChangeKeyboardMapping', $x->{'max_keycode'}, scalar(@$old), $old);
+#$x->req('ChangeKeyboardMapping', $x->{'max_keycode'}, scalar(@$old), $old);
 
 %kc = $x->req('GetKeyboardControl');
 print join(" ", %kc), "\n";
@@ -447,14 +454,14 @@ $bp = $kc{'bell_pitch'};
 
 $x->req('Bell', 100);
 $x->req('ChangeKeyboardControl', 'bell_pitch' => 2 * $bp);
-sleep 1;
+my_sleep 1;
 $x->req('Bell', 100);
 $x->req('ChangeKeyboardControl', 'bell_pitch' => $bp);
 
 ($num, $denom, $thresh) = $x->req('GetPointerControl');
 print "Acceleration: $num/$denom; Threshold: $thresh\n";
 $x->req('ChangePointerControl', 1, 0, $num * 2, $denom, $thresh);
-sleep 2;
+my_sleep 2;
 $x->req('ChangePointerControl', 1, 0, $num, $denom, $thresh);
 
 ($t_out, $interv, $pb, $allow_exp) = $x->req('GetScreenSaver');
@@ -486,7 +493,7 @@ for $ar (@map)
 {
     print "[", join(",", @$ar), "]\n";
 }
-$x->req('SetModifierMapping', @map);
+#$x->req('SetModifierMapping', @map);
 
 $x->req('NoOperation', 4);
 

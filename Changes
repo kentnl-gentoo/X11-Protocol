@@ -41,3 +41,10 @@ Revision history for Perl module X11::Protocol.
 	- added more examples
 	- make Auth work in more cases (including one that can happen
 	  when SSH tunneling)
+
+0.51  Sun May 11 2003
+	- enabled buffering on sockets, added ->flush()
+	- added Ext/{XC_MISC,DPMS,XFree86_Misc}.pm from Jay Kominek
+	- improve resource reuse, with XC_MISC, for long running
+          programs
+	- fix embarrassing "elseQ" typo in pack_event

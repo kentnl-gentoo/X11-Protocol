@@ -23,9 +23,9 @@ sub new {
     my($self) = {};
 
     # Constants
-    
+
     # Events
-    
+
     # Requests
     $x->{'ext_request'}{$request_num} = 
       [

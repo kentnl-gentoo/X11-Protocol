@@ -4,6 +4,10 @@ my $opt_g = 0;
 my $opt_v = 0;
 my $do_root = 1;
 
+# This is fudge factor relating to how the X server allocates resource IDs.
+# 21 seems to be the right value for XFree86 4.2.
+my $client_shift = 21;
+
 $x = new X11::Protocol;
 
 sub get_prop {
@@ -19,7 +23,7 @@ sub pre_walk {
     my @argv = split(/\0/, get_prop($win, "WM_COMMAND"));
     my $cmd = $argv[0];
     $cmd =~ s[^.*/][];
-    $cmd_name{$win >> 20} = $cmd if $cmd ne "";
+    $cmd_name{$win >> $client_shift} = $cmd if $cmd ne "";
     map(pre_walk($_), @kids);
 }
 
@@ -27,8 +31,8 @@ sub tree {
     my $win = shift;
     my($root, $dad, @kids) = $x->QueryTree($win);
 
-    my $client = $win >> 20;
-    my $dad_client = $dad >> 20;
+    my $client = $win >> $client_shift;
+    my $dad_client = $dad >> $client_shift;
     $id = $win & 0xfffff;
 
     my $name = "";

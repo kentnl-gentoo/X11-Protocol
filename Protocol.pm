@@ -2,7 +2,7 @@
 
 package X11::Protocol;
 
-# Copyright (C) 1997, 1998, 1999, 2000 Stephen McCamant. All rights
+# Copyright (C) 1997-2000, 2003 Stephen McCamant. All rights
 # reserved. This program is free software; you can redistribute and/or
 # modify it under the same terms as Perl itself.
 
@@ -15,7 +15,7 @@ require Exporter;
 
 @EXPORT_OK = qw(pad padding padded hexi make_num_hash default_error_handler);
 
-$VERSION = "0.50";
+$VERSION = "0.51";
 
 sub padding ($) {
     my($x) = @_;
@@ -53,7 +53,7 @@ if (pack("L", 1) eq "\0\0\0\1") {
     $Card8 = "Cxxx";
     $Int16 = "sxx";
     $Card16 = "Sxx";
-} else {    
+} else {
     croak "Can't determine byte order!\n";
 }
 
@@ -61,7 +61,7 @@ my($Default_Display);
 
 if ($^O eq "MSWin32") {
     $Default_Display = "localhost";
-} else {    
+} else {
     $Default_Display = "unix";
 }
 
@@ -73,6 +73,11 @@ sub give {
 sub get {
     my($self) = shift;
     return $self->{'connection'}->get(@_);
+}
+
+sub flush {
+    my $self = shift;
+    $self->{'connection'}->flush();
 }
 
 my(%Const) = 
@@ -519,7 +524,7 @@ sub pack_event {
 	    for $f (@fields) {
 		if (not ref $f) {
 		    push @topack, $h{$f};
-		} elseQ {
+		} else {
 		    my(@f) = @$f;
 		    if (ref $f[0] eq "CODE" or ref $f[1] eq "CODE") {
 			&{$f[1]}(\%h) if $f[1];
@@ -571,7 +576,7 @@ sub default_error_handler {
     my($type, $seq, $info, $minor_op, $major_op) 
 	= unpack("xCSLSCxxxxxxxxxxxxxxxxxxxxx", $data);
     my($t);
-    $t = join("", "Protocol error: $type (",
+    $t = join("", "Protocol error: bad $type (",
 	      $self->do_interp('Error', $type), "); ",
 	      "Sequence Number $seq\n",
 	      " Opcode ($major_op, $minor_op) = ",
@@ -588,6 +593,7 @@ sub default_error_handler {
 sub handle_input {
     my $self = shift;
     my($type_b, $type);
+    $self->flush;
     $type_b = $self->get(1);
     $type = unpack "C", $type_b;
     if ($type == 0) {
@@ -611,7 +617,7 @@ sub handle_input {
 	    return $seq;
 	} else {
 	    carp "Unexpected reply to request $seq",
-	    " (of $self->{'sequence_num'})"; 
+	    " (of $self->{'sequence_num'})";
 	    return $seq;
 	}
     }
@@ -634,6 +640,13 @@ sub next_event {
     my(%e);
     $self->handle_input until %e = $self->dequeue_event;
     return %e;
+}
+
+sub next_sequence {
+    my $self = shift;
+    my $ret = $self->{'sequence_num'}++;
+    $self->{'sequence_num'} &= 0xffff;
+    return $ret;
 }
 
 sub add_reply {
@@ -670,7 +683,7 @@ my(@Requests) =
 		 $border_width, $class, $visual, $mask) .
 		     join("", @values), $depth;
  }],
-    
+
  ['ChangeWindowAttributes', sub {
      my $self = shift;
      my($wid, %values) = @_;
@@ -686,7 +699,7 @@ my(@Requests) =
      }
      return pack("LL", $wid, $mask) . join "", @values;
  }],
-    
+
  ['GetWindowAttributes', sub {
      my $self = shift;
      my($wid) = @_;
@@ -699,9 +712,9 @@ my(@Requests) =
 	$map_state, $override_redirect, $colormap, $all_event_masks,
 	$your_event_mask, $do_not_propagate_mask)
 	 = unpack("xCxxxxxxLSCCLLCCCCLLLS", $data);
-     
+
      $colormap = "None" if !$colormap and $self->{'do_interp'};
-     
+
      return ("backing_store" => $self->interp('BackingStore', $backing_store),
 	     "visual" => $visual,
 	     "class" => $self->interp('Class', $class),
@@ -716,7 +729,7 @@ my(@Requests) =
 	     "your_event_mask" => $your_event_mask,
 	     "do_not_propagate_mask" => $do_not_propagate_mask);
  }],
-    
+
  ['DestroyWindow', sub {
      my $self = shift;
      my($wid) = @_;
@@ -728,7 +741,7 @@ my(@Requests) =
      my($wid) = @_;
      return pack "L", $wid;
  }],
-    
+
  ['ChangeSaveSet', sub {
      my $self = shift;
      my($mode, $wid) = @_;
@@ -754,7 +767,7 @@ my(@Requests) =
      my($wid) = @_;
      return pack "L", $wid;
  }],
- 
+
  ['UnmapWindow', sub {
      my $self = shift;
      my($wid) = @_;
@@ -799,7 +812,7 @@ my(@Requests) =
      my($data) = @_;
      my($depth, $root, $x, $y, $width, $height, $border_width)
 	 = unpack("xCxxxxxxLssSSSxxxxxxxxxx", $data);
-     
+
      return ("depth" => $depth, "root" => $root, "x" => $x, "y" => $y,
 	     "width" => $width, "height" => $height,
 	     "border_width" => $border_width);
@@ -814,9 +827,9 @@ my(@Requests) =
      my($data) = @_;
      my($root, $parent, $n)
 	 = unpack("xxxxxxxxLLSxxxxxxxxxxxxxx", substr($data, 0, 32));
-     
+
      $parent = "None" if $parent == 0 and $self->{'do_interp'};
-     
+
      return ($root, $parent, unpack("L*", substr($data, 32)));
  }],
 
@@ -1147,7 +1160,7 @@ my(@Requests) =
      my($max_bounds) = substr($data, 24, 12);
      my($min_char_or_byte2, $max_char_or_byte2, $default_char, $n,
 	$draw_direction, $min_byte1, $max_byte1, $all_chars_exist,
-	$font_ascent, $font_descent, $m) = unpack("SSSSCCCCssL", 
+	$font_ascent, $font_descent, $m) = unpack("SSSSCCCCssL",
 						  substr($data, 40, 20));
      my($properties) = substr($data, 60, 8 * $n);
      my($char_infos) = substr($data, 60 + 8 * $n, 12 * $m);
@@ -1259,7 +1272,7 @@ my(@Requests) =
 	 $n++;
      }
      $path = join("", @dirs);
-     return pack("Sxx" . padded($path), $n, $path);	 
+     return pack("Sxx" . padded($path), $n, $path);
  }],
 
  ['GetFontPath', sub {
@@ -1277,7 +1290,7 @@ my(@Requests) =
 	 push @ret, substr($list, $offset + 1, $len);
 	 $offset += $len + 1;
      }
-     return @ret;     
+     return @ret;
  }],
 
  ['CreatePixmap', sub {
@@ -1380,7 +1393,7 @@ my(@Requests) =
      my($src_d, $dst_d, $gc, $src_x, $src_y, $w, $h, $dst_x, $dst_y, $plane)
 	 = @_;
      return pack("LLLssssSSL", $src_d, $dst_d, $gc, $src_x, $src_y, $dst_x,
-		 $dst_y, $w, $h, $plane); 
+		 $dst_y, $w, $h, $plane);
  }],
 
  ['PolyPoint', sub {
@@ -1487,7 +1500,7 @@ my(@Requests) =
 	     $r = length($item[1]);
 	     while ($r > 0) {
 		 if ($r >= 254) {
-		     push @i, pack("Cc", 254, 0) . substr($item[1], $n, 254);  
+		     push @i, pack("Cc", 254, 0) . substr($item[1], $n, 254);
 		     $n += 254;
 		     $r -= 254;
 		 } else {
@@ -1515,7 +1528,7 @@ my(@Requests) =
 	     $r = length($item[1]);
 	     while ($r > 0) {
 		 if ($r >= 508) {
-		     push @i, pack("Cc", 254, 0) . substr($item[1], $n, 508);  
+		     push @i, pack("Cc", 254, 0) . substr($item[1], $n, 508);
 		     $n += 508;
 		     $r -= 508;
 		 } else {
@@ -1757,7 +1770,7 @@ my(@Requests) =
 	 push @ret, substr($list, $offset + 1, $len);
 	 $offset += $len + 1;
      }
-     return @ret;     
+     return @ret;
  }],
 
  ['ChangeKeyboardMapping', sub {
@@ -1878,7 +1891,7 @@ my(@Requests) =
  }, sub {
      my $self = shift;
      my($data) = @_;
-     my($mode, $n) = unpack("xCxxxxxxSxxxxxxxxxxxxxxxxxxxxxx", 
+     my($mode, $n) = unpack("xCxxxxxxSxxxxxxxxxxxxxxxxxxxxxx",
 			    substr($data, 0, 32));
      $mode = $self->interp('AccessMode', $mode);
      my(@ret, $fam, $off, $l);
@@ -2035,11 +2048,11 @@ sub req {
     my($op, $major, $minor) = $self->get_request($name);
     if (@$op == 2) { # No reply
 	$self->give($self->assemble_request($op, \@args, $major, $minor));
-	$self->{'sequence_num'}++;
+	$self->next_sequence();
     } elsif (@$op == 3) { # One reply
 	my($seq, $data);
 	$self->give($self->assemble_request($op, \@args, $major, $minor));
-	$seq = $self->{'sequence_num'}++;
+	$seq = $self->next_sequence();
 	$self->add_reply($seq & 0xffff, \$data);
 	$self->handle_input() until $data;
 	$self->delete_reply($seq & 0xffff);
@@ -2047,7 +2060,7 @@ sub req {
     } elsif (@$op == 4) { # Many replies
 	my($seq, $data, @stuff, @ret);
 	$self->give($self->assemble_request($op, \@args, $major, $minor));
-	$seq = $self->{'sequence_num'}++;
+	$seq = $self->next_sequence();
 	$self->add_reply($seq & 0xffff, \$data);
 	for (;;) {
 	    $data = 0; $self->handle_input() until $data;
@@ -2073,7 +2086,7 @@ sub send {
     my($name, @args) = @_;
     my($op, $major, $minor) = $self->get_request($name);
     $self->give($self->assemble_request($op, \@args, $major, $minor));
-    return $self->{'sequence_num'}++;
+    return $self->next_sequence();
 }
 
 sub unpack_reply {
@@ -2132,8 +2145,9 @@ sub init_extension {
 	croak($@);
     }
     my($pkg) = "X11::Protocol::Ext::$name";
-    $self->{'ext'}{$name} = [$major, $event, $error,
-			     $pkg->new($self, $major, $event, $error)];
+    my $obj = $pkg->new($self, $major, $event, $error);
+    return 0 if not $obj;
+    $self->{'ext'}{$name} = [$major, $event, $error, $obj];
 }
 
 sub init_extensions {
@@ -2146,8 +2160,21 @@ sub init_extensions {
 
 sub new_rsrc {
     my $self = shift;
-    (($self->{'rsrc_id'}++ << $self->{'rsrc_shift'})
-     & $self->{'resource_id_mask'}) | $self->{'resource_id_base'};
+    if ($self->{'rsrc_id'} == $self->{'rsrc_max'} + 1) {
+	if (exists $self->{'ext'}{'XC_MISC'}) {
+	    my($start, $count) = $self->req('XCMiscGetXIDRange');
+	    $self->{'rsrc_shift'} = 0;
+	    $self->{'rsrc_id'} = 0;
+	    $self->{'rsrc_base'} = $start;
+	    $self->{'rsrc_max'} = $count - 1;
+	    #print "Got $start $count\n";
+	} else {
+	    croak "Out of resource IDs, and we don't have XC_MISC";
+	}
+    }
+    my $ret = ($self->{'rsrc_id'}++ << $self->{'rsrc_shift'})
+      + $self->{'rsrc_base'};
+    return $ret;
 }
 
 sub new {
@@ -2238,6 +2265,7 @@ sub new {
 		      $self->{'authorization_protocol_name'},
 		      $self->{'authorization_protocol_data'}));
 
+    $self->flush;
     my($ret) = ord($self->get(1));
     if ($ret == 0) {
 	my($len, $major, $minor, $xlen) = unpack("CSSS", $self->get(7));
@@ -2263,9 +2291,11 @@ sub new {
 	$self->{'vendor'} = substr($self->get($vlen + padding $vlen),
 				   0, $vlen);
 	$self->{'rsrc_shift'} = 0;
-	$self->{'rsrc_shift'}++ until ($self->{'resource_id_mask'} 
-				       >> $self->{'rsrc_shift'}) & 1;
+	my $mask = $self->{'resource_id_mask'};
+	$self->{'rsrc_shift'}++ until ($mask >> $self->{'rsrc_shift'}) & 1;
 	$self->{'rsrc_id'} = 0;
+	$self->{'rsrc_base'} = $self->{'resource_id_base'};
+	$self->{'rsrc_max'} = $mask;
 	
 	my($fmts) = $self->get(8 * $formats);
 	my($n, $fmt);
@@ -2334,6 +2364,7 @@ sub new {
     } else {
 	croak("Unknown response");
     }
+    $self->init_extension("XC-MISC");
     return $self;
 }
 
@@ -2352,14 +2383,14 @@ sub AUTOLOAD {
 	    *{$AUTOLOAD} = sub {
 		my $self = shift;
 		$self->give($self->assemble_request($op, \@_, $major, $minor));
-		$self->{'sequence_num'}++;
+		$self->next_sequence();
 	    };
 	} elsif (@$op == 3) { # One reply
 	    *{$AUTOLOAD} = sub {
 		my $self = shift;
 		my($seq, $data);
 		$self->give($self->assemble_request($op, \@_, $major, $minor));
-		$seq = $self->{'sequence_num'}++;
+		$seq = $self->next_sequence();
 		$self->add_reply($seq, \$data);
 		$self->handle_input() until $data;
 		$self->delete_reply($seq);
@@ -2451,11 +2482,25 @@ the new protocol object.
 
   $x->new_rsrc;
 
-Returns a new resource identifier. A unique resource ID is required for every
-object that the server creates on behalf of the client: windows, fonts,
-cursors, etc. (IDs are chosen by the client instead of the server for
-efficiency -- the client doesn't have to wait for the server to acknowledge
-the creation before starting to use the object).
+Returns a new resource identifier. A unique resource ID is required
+for every object that the server creates on behalf of the client:
+windows, fonts, cursors, etc. (IDs are chosen by the client instead of
+the server for efficiency -- the client doesn't have to wait for the
+server to acknowledge the creation before starting to use the object).
+
+Note that the total number of available resource IDs, while large, is
+finite.  Beginning from the establishment of a connection, resource
+IDs are allocated sequentially from a range whose size is server
+dependent (commonly 2**21, about 2 million).  If this limit is reached
+and the server does not support the XC_MISC extension, subsequent
+calls to new_rsrc will croak.  If the server does support this
+extension, the module will attempt to request a new range of free IDs
+from the server.  This should allow the program to continue, but it is
+an imperfect solution, as over time the set of available IDs may
+fragment, requiring increasingly frequent round-trip range requests
+from the server.  For long-running programs, the best approach may be
+to keep track of free IDs as resources are destroyed.  In the current
+version, however, no special support is provided for this.
 
 =head2 handle_input
 
@@ -3053,7 +3098,7 @@ If the extension is not present, an empty list is returned.
 
   $x->GetPointerMapping
   =>
-  @map  
+  @map
 
   $x->SetModifierMapping(@keycodes)
   =>
@@ -3264,6 +3309,9 @@ L<X(1)>,
 L<X11::Keysyms>, 
 L<X11::Protocol::Ext::SHAPE>,
 L<X11::Protocol::Ext::BIG_REQUESTS>,
+L<X11::Protocol::Ext::XC_MISC>,
+L<X11::Protocol::Ext::DPMS>,
+L<X11::Protocol::Ext::XFree86_Misc>,
 L<X11::Auth>,
 I<X Window System Protocol (X Version 11)>,
 I<Inter-Client Communications Conventions Manual>,

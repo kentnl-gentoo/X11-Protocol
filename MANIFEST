@@ -11,12 +11,17 @@ Protocol/Connection/INETSocket.pm	TCP/IP IO::Socket connections
 Protocol/Connection/Socket.pm		Base class for IO:Socket connections
 Protocol/Connection/UNIXFH.pm		Unix-domain FileHandle connections
 Protocol/Connection/UNIXSocket.pm	Unix-domain IO::Socket connections
+Protocol/Constants.pm			X11 Protocol symbolic constants
 Protocol/Ext/BIG_REQUESTS.pm		BIG-REQUESTS extension
 Protocol/Ext/SHAPE.pm			SHAPE extension
+Protocol/Ext/XC_MISC.pm			XC-MISC (resource ID) extension
+Protocol/Ext/DPMS.pm			Display Power Management extension
+Protocol/Ext/XFree86_Misc.pm		XFree86 miscellaneous extension
 README					The Instructions
 Todo					The Wishlist
 eg/anim.pl				Animated example
 eg/full_test.pl				Exhaustive test of Protocol.pm et al.
+eg/long-run.pl				A long-running example
 eg/teletype.pl				Two-display example
 eg/widgets1.pl				User interface widget example
 eg/widgets2.pl				X11-Motif version of widget example

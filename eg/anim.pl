@@ -98,7 +98,7 @@ for (;;) {
 	while ($r < 6.25 * $size) {
 	    @polys = ();
 	    for $poly (@$img) {
-		@a = ($poly->[0]);     
+		@a = ($poly->[0]);
 		for $p (@{$poly->[1]}) {
 		    push @{$a[1]}, $size +
 			$r * $p->[1] * sin($theta + $p->[0]);
@@ -116,11 +116,12 @@ for (;;) {
 			     @{$poly->[1]});
 	    }
 	    $x->CopyArea($pm, $win, $gc, (0, 0), 2 * $size, 2 * $size, (0, 0));
-	    
+
 	    # On my Linux/x86 2.0, anything less than 1/100 sec causes
 	    # other things (e.g., mouse tracking) to slow down terribly. 
+	    $x->flush();
 	    select(undef, undef, undef, 1/99);
-	    
+
 	    @old_polys = @polys;
 	    $r *= 1.05;
 	    $theta += .1;

@@ -21,22 +21,22 @@ sub new
     my($self) = {};
 
     # Constants
-  
+
     $x->{'ext_const'}{'ShapeKind'} = ['Bounding', 'Clip'];
     $x->{'ext_const_num'}{'ShapeKind'} =
       {make_num_hash($x->{'ext_const'}{'ShapeKind'})};
-    
+
     $x->{'ext_const'}{'ShapeOp'} = ['Set', 'Union', 'Intersect', 'Subtract',
 				    'Invert'];
     $x->{'ext_const_num'}{'ShapeOp'} =
       {make_num_hash($x->{'ext_const'}{'ShapeOp'})};
-    
+
     # Events
     $x->{'ext_const'}{'Events'}[$event_num] = "ShapeNotify";
     $x->{'ext_events'}[$event_num] =
       ["xCxxLssSSLCxxxxxxxxxxx", ['shape_kind', 'ShapeKind'], 'x', 'y',
        'width', 'height', 'time', 'shaped'];
-  
+
     # Requests
     $x->{'ext_request'}{$request_num} = 
       [
@@ -135,8 +135,10 @@ sub new
 	  [$request_num, $i];
     }
     ($self->{'major'}, $self->{'minor'}) = $x->req('ShapeQueryVersion');
-    croak "Wrong SHAPE version ($self->{'major'} != 1)"
-      unless $self->{'major'} == 1;
+    if ($self->{'major'} != 1) {
+	carp "Wrong SHAPE version ($self->{'major'} != 1)";
+	return 0;
+    }
     return bless $self, $pkg;
 }
 
