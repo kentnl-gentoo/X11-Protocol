@@ -2,7 +2,7 @@
 
 package X11::Protocol;
 
-# Copyright (C) 1997-2000, 2003 Stephen McCamant. All rights
+# Copyright (C) 1997-2000, 2003, 2004 Stephen McCamant. All rights
 # reserved. This program is free software; you can redistribute and/or
 # modify it under the same terms as Perl itself.
 
@@ -15,7 +15,7 @@ require Exporter;
 
 @EXPORT_OK = qw(pad padding padded hexi make_num_hash default_error_handler);
 
-$VERSION = "0.52";
+$VERSION = "0.53";
 
 sub padding ($) {
     my($x) = @_;
@@ -584,7 +584,8 @@ sub format_error_msg {
 	      or $self->{'ext_request'}{$major_op}[$minor_op][0]), "\n");
     if ($type == 2) {
 	$t .= " Bad value $info (" . hexi($info) . ")\n";
-    } elsif ($self->{'error_type'}[$type] & 1) {
+    } elsif ($self->{'error_type'}[$type] == 1 or
+	     $self->{'ext_error_type'}[$type] == 1) {
 	$t .= " Bad resource $info (" . hexi($info) . ")\n";
     }
     return $t;
@@ -1311,7 +1312,7 @@ my(@Requests) =
  ['CreatePixmap', sub {
      my $self = shift;
      my($pixmap, $drawable, $depth, $w, $h) = @_;
-     return pack("LLSS", $pixmap, $drawable, $w, $h), $depth; 
+     return pack("LLSS", $pixmap, $drawable, $w, $h), $depth;
  }],
 
  ['FreePixmap', sub {
@@ -2245,7 +2246,7 @@ sub new {
 	if (ref $_[0]) {
 	    $conn = $_[0];
 	} else {
-	   $display = $_[0];
+	    $display = $_[0];
 	}
     }
 
@@ -2427,7 +2428,6 @@ sub AUTOLOAD {
     return if $name eq "DESTROY"; # Avoid problems during final cleanup
     if ($name =~ /^[A-Z]/) { # Protocol request
 	my($obj) = shift;
-	my(@ret) = $obj->req($name, @_);
 
 	# Make this faster next time
 	no strict 'refs'; # This is slightly icky
@@ -2452,7 +2452,8 @@ sub AUTOLOAD {
 	} else { # ListFontsWithInfo
 	    # Not worth it
 	}
-	return @ret;
+
+	return $obj->req($name, @_);
     } else { # Instance variable
 	if (@_ == 1) {
 	    return $_[0]->{$name};
@@ -3286,8 +3287,8 @@ The new() method should add new types of constant like
 
 and set up the corresponding name to number translation hashes like
 
-  $x->{'ext_const_num'}{'ConstType'} =
-    {make_num_hash($x->{'ext_const'}{'ConstType'})}
+  $x->{'ext_const_num'}{'ConstantType'} =
+    {make_num_hash($x->{'ext_const'}{'ConstantType'})}
 
 Event names go in
 

@@ -4,7 +4,7 @@ my $opt_g = 0;
 my $opt_v = 0;
 my $do_root = 1;
 
-# This is fudge factor relating to how the X server allocates resource IDs.
+# This is a fudge factor relating to how the X server allocates resource IDs.
 # 21 seems to be the right value for XFree86 4.2.
 my $client_shift = 21;
 

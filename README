@@ -1,6 +1,6 @@
-X11::Protocol, version 0.52
+X11::Protocol, version 0.53
 
-Copyright (C) 1997-2003 Stephen McCamant. All rights reserved. This
+Copyright (C) 1997-2004 Stephen McCamant. All rights reserved. This
 module is free software; you can redistribute and/or modify it under
 the same terms as Perl itself. (As an exception, the file Keysyms.pm,
 which is derived from a file in the standard X11 distribution, has
@@ -12,15 +12,9 @@ X11::Protocol	bdpO	Raw interface to X Window System servers
 X11::Keysyms	bdpf	X11 key symbols (translation of keysymdef.h)
 X11::Auth	bdpO	Read and handle X11 '.Xauthority' files
 
-New in this version: 0.52
-	- fixed some -w warnings
-	- fixed "bufffer" typo spotted by Jason Zou
-	- corrected a few documentation typos
-	- fixed buffering bug: "read" should have been "sysread"
-          (problem reported by Scott Smedley)
-	- allow reply processing to recover from getting an error instead
-	  (modeled after a patch from Scott Smedley)
-	- add a version of req() that automatically catches errors
+New in this version: 0.53
+	- Fixed AUTOLOAD scalar context bug reported by Mark Horowitz
+	- Added Render extension
 
 X11::Protocol and the related modules in this distribution are a rough
 equivalent of Xlib (libX11.a, with a bit of Xau and Xext mixed in)
@@ -30,7 +24,7 @@ servers.
 OTHER THINGS YOU NEED
 
 * perl 5.002	  (not tested recently; recent versions have only been
-                   tested with 5.6.1 and 5.8.[01])
+                   tested with 5.6.1 and 5.8.*])
 
 * an X11 server   (any version; it also doesn't have to be on the same
 		   computer, but you must be able to connect to it
@@ -92,6 +86,13 @@ many windows, as a stress-test of the resource-allocation code.
 eg/random-win.pl demonstrates how to handle requests that might cause
 errors, by picking random resource identifiers and trying to paint
 over them with randomly-colored rectangles if they're windows.
+
+eg/render-clock.pl uses the Render extension to draw an analog
+clock. It's a bit spiffier that "xclock -render", in the author's
+opinion, but falls short of fdclock.
+
+eg/render-test.pl is like eg/full_test.pl, but just for the Render
+extension.
 
 eg/teletype.pl shows how it's possible to connect to more than one
 server at once (needs IO::Select).

@@ -58,3 +58,7 @@ Revision history for Perl module X11::Protocol.
 	- allow reply processing to recover from getting an error instead
 	  (modeled after a patch from Scott Smedley)
 	- add a version of req() that automatically catches errors
+
+0.53  Sun Apr 4 2004
+	- Fixed AUTOLOAD scalar context bug reported by Mark Horowitz
+	- Added Render extension
