@@ -45,6 +45,16 @@ Revision history for Perl module X11::Protocol.
 0.51  Sun May 11 2003
 	- enabled buffering on sockets, added ->flush()
 	- added Ext/{XC_MISC,DPMS,XFree86_Misc}.pm from Jay Kominek
-	- improve resource reuse, with XC_MISC, for long running
+	- improved resource reuse, with XC_MISC, for long running
           programs
-	- fix embarrassing "elseQ" typo in pack_event
+	- fixed embarrassing "elseQ" typo in pack_event
+
+0.52  Mon Oct 13 2003
+	- fixed some -w warnings
+	- fixed "bufffer" typo spotted by Jason Zou
+	- corrected a few documentation typos
+	- fixed buffering bug: "read" should have been "sysread"
+          (problem reported by Scott Smedley)
+	- allow reply processing to recover from getting an error instead
+	  (modeled after a patch from Scott Smedley)
+	- add a version of req() that automatically catches errors

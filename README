@@ -1,4 +1,4 @@
-X11::Protocol, version 0.51
+X11::Protocol, version 0.52
 
 Copyright (C) 1997-2003 Stephen McCamant. All rights reserved. This
 module is free software; you can redistribute and/or modify it under
@@ -12,12 +12,15 @@ X11::Protocol	bdpO	Raw interface to X Window System servers
 X11::Keysyms	bdpf	X11 key symbols (translation of keysymdef.h)
 X11::Auth	bdpO	Read and handle X11 '.Xauthority' files
 
-New in this version: 0.51
-	- enabled buffering on sockets, added ->flush()
-	- added Ext/{XC_MISC,DPMS,XFree86_Misc}.pm from Jay Kominek
-	- improve resource reuse, with XC_MISC, for long running
-          programs
-	- fix embarrassing "elseQ" typo in pack_event
+New in this version: 0.52
+	- fixed some -w warnings
+	- fixed "bufffer" typo spotted by Jason Zou
+	- corrected a few documentation typos
+	- fixed buffering bug: "read" should have been "sysread"
+          (problem reported by Scott Smedley)
+	- allow reply processing to recover from getting an error instead
+	  (modeled after a patch from Scott Smedley)
+	- add a version of req() that automatically catches errors
 
 X11::Protocol and the related modules in this distribution are a rough
 equivalent of Xlib (libX11.a, with a bit of Xau and Xext mixed in)
@@ -27,7 +30,7 @@ servers.
 OTHER THINGS YOU NEED
 
 * perl 5.002	  (not tested recently; recent versions have only been
-                   tested with 5.6.1 and 5.8.0)
+                   tested with 5.6.1 and 5.8.[01])
 
 * an X11 server   (any version; it also doesn't have to be on the same
 		   computer, but you must be able to connect to it
@@ -76,16 +79,22 @@ test.pl is a good example of a complete program; it's also a
 translation of an Xlib based program (in this case, `basicwin' from
 O'Reilly & Associates's _Xlib Programming Manual_).
 
-eg/teletype.pl shows how it's possible to connect to more than one
-server at once (needs IO::Select).
-
-eg/anim.pl demonstrates buffered animation, and is just generally
-cool (needs IO::Select).
+eg/anim.pl demonstrates buffered animation (needs IO::Select).
 
 eg/full_test.pl uses just about every request in the protocol. You
 might not want to run it, since it can do weird things to your
 display, but it can show prototype calls if the documentation is
 unclear.
+
+eg/long-run.pl is a program that runs for a long time and allocates
+many windows, as a stress-test of the resource-allocation code.
+
+eg/random-win.pl demonstrates how to handle requests that might cause
+errors, by picking random resource identifiers and trying to paint
+over them with randomly-colored rectangles if they're windows.
+
+eg/teletype.pl shows how it's possible to connect to more than one
+server at once (needs IO::Select).
 
 eg/widgets* are four examples that all do the same thing, with
 different tools. They demonstrate all the techniques needed to
@@ -115,8 +124,6 @@ root. "-g" includes geometries, "-v" uses VT100 line drawing
 characters. Beware that it hardcodes some assumptions about how
 certain X servers encode resource IDs.
 
-eg/long-run.pl is a program that runs for a long time and allocates
-many windows, as a stress-test of the resource-allocation code.
 
 SEE ALSO
 

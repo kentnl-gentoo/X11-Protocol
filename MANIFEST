@@ -2,6 +2,7 @@ Auth.pm					Read .Xauthority files
 Changes					List of changes from previous versions
 Keysyms.pm				Names of keysyms (like keysymdef.h)
 MANIFEST				List of files
+META.yml                                Module meta-data (added by MakeMaker)
 Makefile.PL				Source for Makefile
 Protocol.pm				The X11 Window System Protocol
 Protocol/Connection.pm			Base class for connections
@@ -23,6 +24,7 @@ eg/anim.pl				Animated example
 eg/full_test.pl				Exhaustive test of Protocol.pm et al.
 eg/long-run.pl				A long-running example
 eg/teletype.pl				Two-display example
+eg/random-win.pl                        Error recovering example
 eg/widgets1.pl				User interface widget example
 eg/widgets2.pl				X11-Motif version of widget example
 eg/widgets3.pl				Unfinished OO-interface widget example

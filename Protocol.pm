@@ -15,7 +15,7 @@ require Exporter;
 
 @EXPORT_OK = qw(pad padding padded hexi make_num_hash default_error_handler);
 
-$VERSION = "0.51";
+$VERSION = "0.52";
 
 sub padding ($) {
     my($x) = @_;
@@ -571,9 +571,9 @@ sub pack_event_mask {
     return $mask;
 }
 
-sub default_error_handler {
+sub format_error_msg {
     my($self, $data) = @_;
-    my($type, $seq, $info, $minor_op, $major_op) 
+    my($type, $seq, $info, $minor_op, $major_op)
 	= unpack("xCSLSCxxxxxxxxxxxxxxxxxxxxx", $data);
     my($t);
     $t = join("", "Protocol error: bad $type (",
@@ -587,7 +587,12 @@ sub default_error_handler {
     } elsif ($self->{'error_type'}[$type] & 1) {
 	$t .= " Bad resource $info (" . hexi($info) . ")\n";
     }
-    croak($t);
+    return $t;
+}
+
+sub default_error_handler {
+    my($self, $data) = @_;
+    croak($self->format_error_msg($data));
 }
 
 sub handle_input {
@@ -597,7 +602,9 @@ sub handle_input {
     $type_b = $self->get(1);
     $type = unpack "C", $type_b;
     if ($type == 0) {
-	&{$self->{'error_handler'}}($self, $type_b . $self->get(31));
+	my $data = $type_b . $self->get(31);
+	&{$self->{'error_handler'}}($self, $data);
+	$self->{'error_seq'} = unpack("xxSx28", $data);
 	return 0;
     } elsif ($type > 1) {
 	if ($self->{'event_handler'} eq "queue") {
@@ -620,6 +627,14 @@ sub handle_input {
 	    " (of $self->{'sequence_num'})";
 	    return $seq;
 	}
+    }
+}
+
+sub handle_input_for {
+    my($self, $seq) = @_;
+    my $stat;
+    while ($stat = $self->handle_input()) {
+	return if $stat == $seq or $stat == 0 && $self->{'error_seq'} == $seq;
     }
 }
 
@@ -2015,7 +2030,7 @@ sub get_request {
     my($name) = @_;
     my($major, $minor);
     $major = $self->num('Request', $name);
-    if (int($major) != 0) { # Core request
+    if ($major =~ /^\d+$/) { # Core request
 	return ($self->{'requests'}[$major], $major);
     } else { # Extension request
 	croak "Unknown request `$name'" unless
@@ -2054,7 +2069,7 @@ sub req {
 	$self->give($self->assemble_request($op, \@args, $major, $minor));
 	$seq = $self->next_sequence();
 	$self->add_reply($seq & 0xffff, \$data);
-	$self->handle_input() until $data;
+	$self->handle_input_for($seq & 0xffff);
 	$self->delete_reply($seq & 0xffff);
 	return &{$op->[2]}($self, $data);
     } elsif (@$op == 4) { # Many replies
@@ -2063,7 +2078,7 @@ sub req {
 	$seq = $self->next_sequence();
 	$self->add_reply($seq & 0xffff, \$data);
 	for (;;) {
-	    $data = 0; $self->handle_input() until $data;
+	    $data = 0; $self->handle_input_for($seq & 0xffff);
 	    @stuff = &{$op->[2]}($self, $data);
 	    last unless @stuff;
 	    if ($op->[3] eq "ARRAY") {
@@ -2078,6 +2093,44 @@ sub req {
 	return @ret;
     } else {
 	croak "Can't handle request $name";
+    }
+}
+
+sub robust_req {
+    my $self = shift;
+    my($name, @args) = @_;
+    my($op, $major, $minor) = $self->get_request($name);
+    # Luckily, ListFontsWithInfo can't cause any errors
+    return [$self->req($name, @args)] if @$op == 4;
+    my $err_data;
+    local($self->{'error_handler'}) = sub { $err_data = $_[1]; };
+    my($seq, $data);
+    $self->give($self->assemble_request($op, \@args, $major, $minor));
+    $seq = $self->next_sequence() & 0xffff;
+    if (@$op == 2) {
+	# No real reply, but fake up a request with a reply so we can
+	# tell how long to wait before knowing the real request
+	# succeeded
+	my($fake_op, $fake_major) = $self->get_request("GetScreenSaver");
+	$self->give($self->assemble_request($fake_op, [], $fake_major, 0));
+	$seq = $self->next_sequence() & 0xffff;
+    }
+    $self->add_reply($seq, \$data);
+    for (;;) {
+	my $stat = $self->handle_input();
+	if ($stat == $seq) {
+	    $self->delete_reply($seq);
+	    if (@$op == 3) {
+		return [&{$op->[2]}($self, $data)];
+	    } else {
+		return [];
+	    }
+	} elsif ($stat == 0 && $self->{'error_seq'} == $seq) {
+	    my($type, undef, $info, $minor_op, $major_op)
+	      = unpack("xCSLSCxxxxxxxxxxxxxxxxxxxxx", $err_data);
+	    return($self->interp('Error', $type),
+		   $major_op, $minor_op, $info);
+	}
     }
 }
 
@@ -2277,7 +2330,7 @@ sub new {
     } elsif ($ret == 1) {
 	my($major, $minor, $xlen) = unpack('xSSS', $self->get(7));
 	($self->{'release_number'}, $self->{'resource_id_base'},
-	 $self->{'resource_id_mask'}, $self->{'motion_bufffer_size'},
+	 $self->{'resource_id_mask'}, $self->{'motion_buffer_size'},
 	 my($vlen), $self->{'maximum_request_length'}, my($screens), 
 	 my($formats), $self->{'image_byte_order'}, 
 	 $self->{'bitmap_bit_order'}, $self->{'bitmap_scanline_unit'}, 
@@ -2391,9 +2444,9 @@ sub AUTOLOAD {
 		my($seq, $data);
 		$self->give($self->assemble_request($op, \@_, $major, $minor));
 		$seq = $self->next_sequence();
-		$self->add_reply($seq, \$data);
-		$self->handle_input() until $data;
-		$self->delete_reply($seq);
+		$self->add_reply($seq & 0xffff, \$data);
+		$self->handle_input_for($seq & 0xffff);
+		$self->delete_reply($seq & 0xffff);
 		return &{$op->[2]}($self, $data);
 	    };
 	} else { # ListFontsWithInfo
@@ -2524,7 +2577,7 @@ GetAtomName request, but caches the result for efficiency.
 
   $atom = $x->atom($name);
 
-The inverse operation; Return the (numeric) atom correspoding to $name.
+The inverse operation; Return the (numeric) atom corresponding to $name.
 This is similar to the InternAtom request, but caches the result.
 
 =head2 choose_screen
@@ -2533,7 +2586,7 @@ This is similar to the InternAtom request, but caches the result.
 
 Indicate that you prefer to use a particular screen of the display. Per-screen
 information, such as 'root', 'width_in_pixels', and 'white_pixel' will be
-made avaliable as 
+made available as 
 
   $x->{'root'}
 
@@ -2549,7 +2602,7 @@ converted into numbers by the module.  Their names are the same as
 those in the protocol specification, including capitalization, but
 with hyphens ('-') changed to underscores ('_') to look more
 perl-ish. If you want to do the conversion yourself for some reason,
-the following methods are avaliable:
+the following methods are available:
 
 =head2 num
 
@@ -2627,7 +2680,7 @@ Here is an example of what the object's information might look like:
   'screens' => [{'root' => 43, 'width_in_pixels' => 800,
                  'height_in_pixels' => 600,
                  'width_in_millimeters' => 271,
-                 'height_in_millmerters' => 203,
+                 'height_in_millimeters' => 203,
                  'root_depth' => 8,
                  'root_visual' => 34,
                  'default_colormap' => 33,
@@ -2671,9 +2724,23 @@ Here is an example of what the object's information might look like:
   $x->req('CreateWindow', ...);
   $x->CreateWindow(...);
 
-Send a protocol request to the server, and get the reply. For names of and 
-information about individual requests, see below and/or
+Send a protocol request to the server, and get the reply, if any. For
+names of and information about individual requests, see below and/or
 the protocol reference manual.
+
+=head2 robust_req
+
+  $x->robust_req('CreateWindow', ...);
+
+Like request(), but if the server returns an error, return the error
+information rather than calling the error handler (which by default
+just croaks). If the request succeeds, returns an array reference
+containing whatever request() would have. Otherwise, returns the error
+type, the major and minor opcodes of the failed request, and the extra
+error information, if any. Note that even if the request normally
+wouldn't have a reply, this method still has to wait for a round-trip
+time to see whether an error occurred. If you're concerned about
+performance, you should design your error handling to be asynchronous.
 
 =head2 add_reply
 
@@ -2687,7 +2754,7 @@ numbered $sequence_num comes, it will be stored in $var.
   $x->delete_reply($sequence_num);
 
 Delete the entry in 'replies' for the specified reply. (This should be done
-after the reply is recieved).
+after the reply is received).
 
 =head2 send
 
@@ -2695,7 +2762,7 @@ after the reply is recieved).
 
 Send a request, but do not wait for a reply. You must handle the reply, if any,
 yourself, using add_reply(), handle_input(), delete_reply(), and
-unpack_reply(), generally in that order. 
+unpack_reply(), generally in that order.
 
 =head2 unpack_reply
 
@@ -3067,7 +3134,7 @@ If the extension is not present, an empty list is returned.
 
   $x->GetPointerControl
   =>
-  ($accerleration_numerator, $acceleration_denominator, $threshold)
+  ($acceleration_numerator, $acceleration_denominator, $threshold)
 
   $x->SetScreenSaver($timeout, $interval, $prefer_blanking,
 		     $allow_exposures)

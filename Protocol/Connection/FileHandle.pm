@@ -2,9 +2,9 @@
 
 package X11::Protocol::Connection::FileHandle;
 
-# Copyright (C) 1997 Stephen McCamant. All rights reserved. This program
-# is free software; you can redistribute and/or modify it under the same
-# terms as Perl itself.
+# Copyright (C) 1997, 2003 Stephen McCamant. All rights reserved. This
+# program is free software; you can redistribute and/or modify it
+# under the same terms as Perl itself.
 
 use FileHandle;
 use Carp;
@@ -14,7 +14,7 @@ use vars '$VERSION', '@ISA';
 use X11::Protocol::Connection;
 @ISA = ('X11::Protocol::Connection');
 
-$VERSION = 0.01;
+$VERSION = 0.02;
 
 sub give {
     my($self) = shift;
@@ -29,7 +29,7 @@ sub get {
     my($x, $n, $o) = ("", 0, 0);
     my($fh) = $$self;
     until ($o == $len) {
-	$n = read $fh, $x, $len - $o, $o;
+	$n = sysread $fh, $x, $len - $o, $o;
 	croak $! unless defined $n;
 	$o += $n;
     }
@@ -42,8 +42,8 @@ sub fh {
 }
 
 sub flush {
-   my($self) = shift;
-   my($fh) = $$self;
+    my($self) = shift;
+    my($fh) = $$self;
 }
 
 1;

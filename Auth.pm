@@ -73,7 +73,9 @@ sub get_all {
     my $self = shift;
     return @{$self->{data}} if $self->{data};
     my(@a, @x);
-    push @a, [@x] while @x = $self->get_one;
+    while (@x = $self->get_one) {
+	push @a, [@x];
+    }
     $self->{data} = [@a];
     return @a;
 }
@@ -94,7 +96,7 @@ sub get_by_host {
 	next unless $fam eq $d->[0] or ($fam eq "Internet"
 					and $d->[0] eq "Local");
 	if ($fam eq "Internet" or $fam eq "Local") {
-	    if ($d->[1] eq $addr or $d->[1] eq $host) {
+	    if ($addr && $d->[1] eq $addr or $d->[1] eq $host) {
 		return ($d->[3], $d->[4]);
 	    }
 	}

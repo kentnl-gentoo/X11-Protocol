@@ -2,9 +2,9 @@
 
 package X11::Protocol::Connection::Socket;
 
-# Copyright (C) 1997, 1999 Stephen McCamant. All rights reserved. This program
-# is free software; you can redistribute and/or modify it under the same
-# terms as Perl itself.
+# Copyright (C) 1997, 1999, 2003 Stephen McCamant. All rights
+# reserved. This program is free software; you can redistribute and/or
+# modify it under the same terms as Perl itself.
 
 use IO::Socket;
 use Carp;
@@ -14,7 +14,7 @@ use vars '$VERSION', '@ISA';
 use X11::Protocol::Connection;
 @ISA = ('X11::Protocol::Connection');
 
-$VERSION = 0.01;
+$VERSION = 0.02;
 
 sub give {
     my($self) = shift;
@@ -29,7 +29,7 @@ sub get {
     my($x, $n, $o) = ("", 0, 0);
     my($sock) = $$self;
     until ($o == $len) {
-	$n = $sock->read($x, $len - $o, $o);
+	$n = $sock->sysread($x, $len - $o, $o);
 	croak $! unless defined $n;
 	$o += $n;
     }
