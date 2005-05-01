@@ -62,3 +62,8 @@ Revision history for Perl module X11::Protocol.
 0.53  Sun Apr 4 2004
 	- Fixed AUTOLOAD scalar context bug reported by Mark Horowitz
 	- Added Render extension
+
+0.54  Sun May 1 2005
+	- Minor changes to render-clock example
+	- Add new Host types from X11R6.7
+	- Fix handle_input_for bug reported by Rich Williams

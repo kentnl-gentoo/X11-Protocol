@@ -2,7 +2,7 @@
 
 package X11::Protocol;
 
-# Copyright (C) 1997-2000, 2003, 2004 Stephen McCamant. All rights
+# Copyright (C) 1997-2000, 2003-2005 Stephen McCamant. All rights
 # reserved. This program is free software; you can redistribute and/or
 # modify it under the same terms as Perl itself.
 
@@ -15,7 +15,7 @@ require Exporter;
 
 @EXPORT_OK = qw(pad padding padded hexi make_num_hash default_error_handler);
 
-$VERSION = "0.53";
+$VERSION = "0.54";
 
 sub padding ($) {
     my($x) = @_;
@@ -161,7 +161,8 @@ my(%Const) =
      'AutoRepeatMode' => ['Off', 'On', 'Default'],
      'ScreenSaver' => ['No', 'Yes', 'Default'],
      'HostChangeMode' => ['Insert', 'Delete'],
-     'HostFamily' => ['Internet', 'DECnet', 'Chaos'],
+     'HostFamily' => ['Internet', 'DECnet', 'Chaos', 0, 0,
+		      'ServerInterpreted', 'InternetV6'],
      'AccessMode' => ['Disabled', 'Enabled'],
      'CloseDownMode' => ['Destroy', 'RetainPermanent', 'RetainTemporary'],
      'ScreenSaverAction' => ['Reset', 'Activate'],
@@ -177,7 +178,7 @@ my(%Const) =
      'GCFillRule' => ['EvenOdd', 'Winding'],
      'GCSubwindowMode' => ['ClipByChildren', 'IncludeInferiors'],
      'GCArcMode' => ['Chord', 'PieSlice'],
-     'Error' => [0, 'Request', 'Value', 'Window', 'Pixmap', 'Atom', 
+     'Error' => [0, 'Request', 'Value', 'Window', 'Pixmap', 'Atom',
 		 'Cursor', 'Font', 'Match', 'Drawable', 'Access', 'Alloc',
 		 'Colormap', 'GContext', 'IDChoice', 'Name', 'Length',
 		 'Implementation'],
@@ -606,7 +607,7 @@ sub handle_input {
 	my $data = $type_b . $self->get(31);
 	&{$self->{'error_handler'}}($self, $data);
 	$self->{'error_seq'} = unpack("xxSx28", $data);
-	return 0;
+	return -1;
     } elsif ($type > 1) {
 	if ($self->{'event_handler'} eq "queue") {
 	    push @{$self->{'event_queue'}}, $type_b . $self->get(31);
@@ -633,9 +634,10 @@ sub handle_input {
 
 sub handle_input_for {
     my($self, $seq) = @_;
-    my $stat;
-    while ($stat = $self->handle_input()) {
-	return if $stat == $seq or $stat == 0 && $self->{'error_seq'} == $seq;
+    for (;;) {
+	my $stat = $self->handle_input();
+	return if $stat == $seq; # Normal reply for this request
+	return if $stat == -1 && $self->{'error_seq'} == $seq; # Error for this
     }
 }
 

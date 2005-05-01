@@ -2,9 +2,9 @@
 
 package X11::Auth;
 
-# Copyright (C) 1997, 1999 Stephen McCamant. All rights reserved. This
-# program is free software; you can redistribute and/or modify it
-# under the same terms as Perl itself.
+# Copyright (C) 1997, 1999, 2005 Stephen McCamant. All rights
+# reserved. This program is free software; you can redistribute and/or
+# modify it under the same terms as Perl itself.
 
 use Carp;
 use strict;
@@ -12,11 +12,11 @@ use vars '$VERSION';
 use FileHandle;
 require 5.000;
 
-$VERSION = 0.03;
+$VERSION = 0.04;
 
 sub new {
     my($class, $fname) = @_;
-    $fname = $fname || $main::ENV{"XAUTHORITY"} || 
+    $fname = $fname || $main::ENV{"XAUTHORITY"} ||
 	"$main::ENV{HOME}/.Xauthority";
     return 0 unless -e $fname;
     my $self = bless {}, $class;
@@ -47,7 +47,8 @@ sub get_one {
     $x = unpack("n", $self->read(2)); # Family
     my $type = {256 => 'Local', 65535 => 'Wild', 254 => 'Netname',
 		253 => 'Krb5Principal', 252 => 'LocalHost', 0 => 'Internet',
-		1 => 'DECnet', 2 => 'Chaos'}->{$x};
+		1 => 'DECnet', 2 => 'Chaos', 5 => 'ServerInterpreted',
+	        6 => 'InternetV6'}->{$x};
     if (not defined($type)) {
 	warn "Error in $self->{filename}: unknown address type $x";
 	return ();

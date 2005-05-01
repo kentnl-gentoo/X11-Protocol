@@ -96,12 +96,42 @@ $X->ChangeProperty($win, $X->atom('WM_NORMAL_HINTS'),
 $X->ChangeProperty($win, $X->atom('WM_HINTS'), $X->atom('WM_HINTS'),
                    32, 'Replace', pack("IIIx24", 1|2, 1, 1));
 
+my $delete_atom = $X->atom('WM_DELETE_WINDOW');
+$X->ChangeProperty($win, $X->atom('WM_PROTOCOLS'), $X->atom('ATOM'),
+                   32, 'Replace', pack("L", $delete_atom));
+
 my $progname = $0;
 $progname =~ s[^.*/][];
 $progname = $ENV{'RESOURCE_NAME'} || $progname;
 
 $X->ChangeProperty($win, $X->atom('WM_CLASS'), $X->atom('STRING'),
                    8, 'Replace', "$progname\0Render-clock");
+
+my($tick_color, $minute_color, $hour_color, $second_color);
+
+#                Red    Green  Blue   Opacity
+# $tick_color   = [0,     0,     0,     0xffff];
+# $minute_color = [0xffff,0,     0,     0x8000];
+# $hour_color   = [0,     0xffff,0,     0x8000];
+# $second_color = [0,     0,     0xffff,0x8000];
+
+# #                Red    Green  Blue   Opacity
+# $tick_color   = [0,     0,     0,     0xffff];
+# $minute_color = [0,     0,     0,     0x8000];
+# $hour_color   = [0,     0,     0,     0x8000];
+# $second_color = [0,     0,     0,     0x8000];
+
+# #                Red    Green  Blue   Opacity
+# $tick_color   = [0,     0,     0,     0xffff];
+# $minute_color = [0,     0,     0x4fff,0x8000];
+# $hour_color   = [0,     0,     0x4fff,0x8000];
+# $second_color = [0,     0,     0x4fff,0x8000];
+
+#                Red    Green  Blue   Opacity
+$tick_color   = [0,     0,     0,     0xffff];
+$minute_color = [0xffff,0,     0,     0x8000];
+$hour_color   = [0,     0x4fff,0,     0x8000];
+$second_color = [0,     0,     0x4fff,0x8000];
 
 
 my($face_pixmap, $face_pict);
@@ -110,29 +140,25 @@ my $black_pixmap = $X->new_rsrc;
 $X->CreatePixmap($black_pixmap, $win, 32, 1, 1);
 my $black_pict = $X->new_rsrc;
 $X->RenderCreatePicture($black_pict, $black_pixmap, $rgba32, 'repeat' => 1);
-$X->RenderFillRectangles('Src', $black_pict, [0,0,0,0xffff],
-			 [0, 0, 1, 1]);
+$X->RenderFillRectangles('Src', $black_pict, $tick_color, [0, 0, 1, 1]);
 
 my $red_pixmap = $X->new_rsrc;
 $X->CreatePixmap($red_pixmap, $win, 32, 1, 1);
 my $red_pict = $X->new_rsrc;
 $X->RenderCreatePicture($red_pict, $red_pixmap, $rgba32, 'repeat' => 1);
-$X->RenderFillRectangles('Src', $red_pict, [0xffff,0,0,0x8000],
-			 [0, 0, 1, 1]);
+$X->RenderFillRectangles('Src', $red_pict, $minute_color, [0, 0, 1, 1]);
 
 my $green_pixmap = $X->new_rsrc;
 $X->CreatePixmap($green_pixmap, $win, 32, 1, 1);
 my $green_pict = $X->new_rsrc;
 $X->RenderCreatePicture($green_pict, $green_pixmap, $rgba32, 'repeat' => 1);
-$X->RenderFillRectangles('Src', $green_pict, [0,0xffff,0,0x8000],
-			 [0, 0, 1, 1]);
+$X->RenderFillRectangles('Src', $green_pict, $hour_color, [0, 0, 1, 1]);
 
 my $blue_pixmap = $X->new_rsrc;
 $X->CreatePixmap($blue_pixmap, $win, 32, 1, 1);
 my $blue_pict = $X->new_rsrc;
 $X->RenderCreatePicture($blue_pict, $blue_pixmap, $rgba32, 'repeat' => 1);
-$X->RenderFillRectangles('Src', $blue_pict, [0,0,0xffff,0x8000],
-			 [0, 0, 1, 1]);
+$X->RenderFillRectangles('Src', $blue_pict, $second_color, [0, 0, 1, 1]);
 
 my $hilite_pixmap = $X->new_rsrc;
 $X->CreatePixmap($hilite_pixmap, $win, 32, 1, 1);
@@ -313,6 +339,9 @@ for (;;) {
 	    $frames = 0;
 	    $start_time = time;
 	    $sample_time = Time::HiRes::time;
+	} elsif ($e{'name'} eq "ClientMessage"
+		 and unpack("L", $e{'data'}) == $delete_atom) {
+	    exit;
 	}
     }
     draw();

@@ -1,6 +1,6 @@
-X11::Protocol, version 0.53
+X11::Protocol, version 0.54
 
-Copyright (C) 1997-2004 Stephen McCamant. All rights reserved. This
+Copyright (C) 1997-2005 Stephen McCamant. All rights reserved. This
 module is free software; you can redistribute and/or modify it under
 the same terms as Perl itself. (As an exception, the file Keysyms.pm,
 which is derived from a file in the standard X11 distribution, has
@@ -12,9 +12,10 @@ X11::Protocol	bdpO	Raw interface to X Window System servers
 X11::Keysyms	bdpf	X11 key symbols (translation of keysymdef.h)
 X11::Auth	bdpO	Read and handle X11 '.Xauthority' files
 
-New in this version: 0.53
-	- Fixed AUTOLOAD scalar context bug reported by Mark Horowitz
-	- Added Render extension
+New in this version: 0.54
+	- Minor changes to render-clock example
+	- Add new Host types from X11R6.7
+	- Fix handle_input_for bug reported by Rich Williams
 
 X11::Protocol and the related modules in this distribution are a rough
 equivalent of Xlib (libX11.a, with a bit of Xau and Xext mixed in)
@@ -35,10 +36,13 @@ OTHER THINGS YOU NEED
 
 * documentation about the X protocol (or at least Xlib, though its
 interface is subtly different). O'Reilly has a good book, and the full
-X distribution includes the definitive specification (see
-ftp://ftp.x.org/, currently
-ftp://ftp.x.org/pub/R6.6/xc/doc/hardcopy/XProtocol for the PostScript
-version, or the xspecs package for Debian users)
+X distribution includes the definitive specification. As of this
+writing, the latest version can be obtained from the X.org CVS
+repository at:
+
+http://cvs.freedesktop.org/*checkout*/xorg/xc/doc/hardcopy/XProtocol/proto.PS.gz
+
+For Debian users, this is in the xspecs package.
 
 	 *********************** NOTE ***********************
 
