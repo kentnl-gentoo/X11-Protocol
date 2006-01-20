@@ -59,11 +59,16 @@ Revision history for Perl module X11::Protocol.
 	  (modeled after a patch from Scott Smedley)
 	- add a version of req() that automatically catches errors
 
-0.53  Sun Apr 4 2004
+0.53  Sun Apr  4 2004
 	- Fixed AUTOLOAD scalar context bug reported by Mark Horowitz
 	- Added Render extension
 
-0.54  Sun May 1 2005
+0.54  Sun May  1 2005
 	- Minor changes to render-clock example
 	- Add new Host types from X11R6.7
 	- Fix handle_input_for bug reported by Rich Williams
+
+0.55  Thu Jan 19 2006
+	- Fix spurious error on zero-length .Xauthority field in
+	  X11::Auth (reported independently by Cyril Bouthors and
+          Anthony DeStefano)

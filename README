@@ -1,6 +1,6 @@
-X11::Protocol, version 0.54
+X11::Protocol, version 0.55
 
-Copyright (C) 1997-2005 Stephen McCamant. All rights reserved. This
+Copyright (C) 1997-2006 Stephen McCamant. All rights reserved. This
 module is free software; you can redistribute and/or modify it under
 the same terms as Perl itself. (As an exception, the file Keysyms.pm,
 which is derived from a file in the standard X11 distribution, has
@@ -12,10 +12,10 @@ X11::Protocol	bdpO	Raw interface to X Window System servers
 X11::Keysyms	bdpf	X11 key symbols (translation of keysymdef.h)
 X11::Auth	bdpO	Read and handle X11 '.Xauthority' files
 
-New in this version: 0.54
-	- Minor changes to render-clock example
-	- Add new Host types from X11R6.7
-	- Fix handle_input_for bug reported by Rich Williams
+New in this version: 0.55
+	- Fix spurious error on zero-length .Xauthority field in
+	  X11::Auth (reported independently by Cyril Bouthors and
+          Anthony DeStefano)
 
 X11::Protocol and the related modules in this distribution are a rough
 equivalent of Xlib (libX11.a, with a bit of Xau and Xext mixed in)
@@ -43,6 +43,10 @@ repository at:
 http://cvs.freedesktop.org/*checkout*/xorg/xc/doc/hardcopy/XProtocol/proto.PS.gz
 
 For Debian users, this is in the xspecs package.
+
+Speaking of Debian, this module is also available as the Debian
+package "libx11-protocol-perl"; thanks to tony mancill for maintaing
+it.
 
 	 *********************** NOTE ***********************
 

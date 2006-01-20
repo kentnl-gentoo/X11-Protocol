@@ -15,7 +15,7 @@ require Exporter;
 
 @EXPORT_OK = qw(pad padding padded hexi make_num_hash default_error_handler);
 
-$VERSION = "0.54";
+$VERSION = "0.55";
 
 sub padding ($) {
     my($x) = @_;

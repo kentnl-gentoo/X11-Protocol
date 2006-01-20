@@ -12,7 +12,7 @@ use vars '$VERSION';
 use FileHandle;
 require 5.000;
 
-$VERSION = 0.04;
+$VERSION = 0.05;
 
 sub new {
     my($class, $fname) = @_;
@@ -30,44 +30,60 @@ sub new {
 sub open { new(@_) }
 
 sub read {
-    my $self = shift;
+    my($self, $len) = @_;
     my($buf);
-    read $self->{filehandle}, $buf, $_[0] or croak "Can't read: $!";
+    my $ret = read $self->{filehandle}, $buf, $len;
+    if (not defined $ret) {
+	croak "Can't read authority file " . $self->{filename} . ": $!";
+    } elsif ($ret < $len) {
+	warn "Expecting $len bytes, got $ret at " . tell($self->{filename});
+	croak "Unexpected short read from authority file" . $self->{filename};
+    }
     return $buf;
 }
 
 sub get_one {
     my $self = shift;
     my(@a, $x);
+    my $warned_nulls = 0;
+  RETRY: {
+	if ($self->{filehandle}->eof) {
+	    close $self->{filehandle};
+	    return ();
+	}
+	$x = unpack("n", $self->read(2)); # Family
+	my $type = {256 => 'Local', 65535 => 'Wild', 254 => 'Netname',
+		    253 => 'Krb5Principal', 252 => 'LocalHost',
+		    0 => 'Internet', 1 => 'DECnet', 2 => 'Chaos',
+		    5 => 'ServerInterpreted', 6 => 'InternetV6'}->{$x};
+	if (not defined($type)) {
+	    warn "Error in $self->{filename}: unknown address type $x";
+	}
+	push @a, $type;
+	
+	$x = unpack("n", $self->read(2)); # Address
+	push @a, $self->read($x);
+	
+	$x = unpack("n", $self->read(2)); # Display `number'
+	push @a, $self->read($x);
+	
+	$x = unpack("n", $self->read(2)); # Authorization name
+	push @a, $self->read($x);
+	
+	$x = unpack("n", $self->read(2)); # Authorization data
+	push @a, $self->read($x);
 
-    if ($self->{filehandle}->eof) {
-	close $self->{filehandle};
-	return ();
+	if ($type eq "Internet" and $a[1] eq "" and $a[2] eq ""
+	    and $a[3] eq "" and $a[4] eq "") {
+	    warn "Error in $self->{filename}: unexpected null bytes"
+	      unless $warned_nulls;
+	    $warned_nulls = 1;
+	    @a = ();
+	    next RETRY;
+	}
+
+	return @a;
     }
-    $x = unpack("n", $self->read(2)); # Family
-    my $type = {256 => 'Local', 65535 => 'Wild', 254 => 'Netname',
-		253 => 'Krb5Principal', 252 => 'LocalHost', 0 => 'Internet',
-		1 => 'DECnet', 2 => 'Chaos', 5 => 'ServerInterpreted',
-	        6 => 'InternetV6'}->{$x};
-    if (not defined($type)) {
-	warn "Error in $self->{filename}: unknown address type $x";
-	return ();
-    }
-    push @a, $type;
-
-    $x = unpack("n", $self->read(2)); # Address
-    push @a, $self->read($x);
-
-    $x = unpack("n", $self->read(2)); # Display `number'
-    push @a, $self->read($x);
-
-    $x = unpack("n", $self->read(2)); # Authorization name
-    push @a, $self->read($x);
-
-    $x = unpack("n", $self->read(2)); # Authorization data
-    push @a, $self->read($x);
-
-    return @a;
 }
 
 sub get_all {
