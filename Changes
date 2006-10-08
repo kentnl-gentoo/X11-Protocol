@@ -72,3 +72,7 @@ Revision history for Perl module X11::Protocol.
 	- Fix spurious error on zero-length .Xauthority field in
 	  X11::Auth (reported independently by Cyril Bouthors and
           Anthony DeStefano)
+
+0.56  Sun Oct 8 2006
+	- Fix infinite loop regression in robust_req in 0.54 caused by
+	  handle_input change (found by Scott Smedley)

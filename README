@@ -1,4 +1,4 @@
-X11::Protocol, version 0.55
+X11::Protocol, version 0.56
 
 Copyright (C) 1997-2006 Stephen McCamant. All rights reserved. This
 module is free software; you can redistribute and/or modify it under
@@ -12,10 +12,9 @@ X11::Protocol	bdpO	Raw interface to X Window System servers
 X11::Keysyms	bdpf	X11 key symbols (translation of keysymdef.h)
 X11::Auth	bdpO	Read and handle X11 '.Xauthority' files
 
-New in this version: 0.55
-	- Fix spurious error on zero-length .Xauthority field in
-	  X11::Auth (reported independently by Cyril Bouthors and
-          Anthony DeStefano)
+New in this version: 0.56
+	- Fix infinite loop regression in robust_req in 0.54 caused by
+	  handle_input change (found by Scott Smedley)
 
 X11::Protocol and the related modules in this distribution are a rough
 equivalent of Xlib (libX11.a, with a bit of Xau and Xext mixed in)
@@ -25,7 +24,7 @@ servers.
 OTHER THINGS YOU NEED
 
 * perl 5.002	  (not tested recently; recent versions have only been
-                   tested with 5.6.1 and 5.8.*])
+                   tested with 5.6.1 and 5.8.*)
 
 * an X11 server   (any version; it also doesn't have to be on the same
 		   computer, but you must be able to connect to it
@@ -145,7 +144,7 @@ Perl/Tk, available as the Tk module from CPAN.
 * The Motif widget set, as well as some support for other standard X
 libraries, can be accessed using the X11::Motif modules, available
 from CPAN. An alpha version is also available directly from the
-author's homepage at http://www.msen.com/~fox/X11-Motif-1.2a8.tar.gz .
+author's homepage at http://www.vulpes.com/X11-Motif-1.2a8.tar.gz .
 
 * Several other X widgets sets have Perl interfaces, incluing GTK (the
 Gtk module), Qt (the PerlQt module), wxWindows (the Wx module) and Sx

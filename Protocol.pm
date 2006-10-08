@@ -2,7 +2,7 @@
 
 package X11::Protocol;
 
-# Copyright (C) 1997-2000, 2003-2005 Stephen McCamant. All rights
+# Copyright (C) 1997-2000, 2003-2006 Stephen McCamant. All rights
 # reserved. This program is free software; you can redistribute and/or
 # modify it under the same terms as Perl itself.
 
@@ -15,7 +15,7 @@ require Exporter;
 
 @EXPORT_OK = qw(pad padding padded hexi make_num_hash default_error_handler);
 
-$VERSION = "0.55";
+$VERSION = "0.56";
 
 sub padding ($) {
     my($x) = @_;
@@ -2128,7 +2128,7 @@ sub robust_req {
 	    } else {
 		return [];
 	    }
-	} elsif ($stat == 0 && $self->{'error_seq'} == $seq) {
+	} elsif ($stat == -1 && $self->{'error_seq'} == $seq) {
 	    my($type, undef, $info, $minor_op, $major_op)
 	      = unpack("xCSLSCxxxxxxxxxxxxxxxxxxxxx", $err_data);
 	    return($self->interp('Error', $type),

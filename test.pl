@@ -6,7 +6,7 @@
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..2\n"; }
+BEGIN { $| = 1; print "1..3\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use X11::Protocol;
 $loaded = 1;
@@ -30,6 +30,17 @@ use X11::Protocol;
 $display = $args{'-d'} || $args{'-display'} || $ENV{DISPLAY};
 
 $x = X11::Protocol->new($display);
+
+while (my $id = int rand(2**24)) {
+    # Check that we can continue after an error without crashing or
+    # getting stuck. Because of a regression in versions 0.54 and
+    # 0.55, this would get stuck in an infinite loop.
+    my($result,) = $x->robust_req('GetGeometry', $id);
+    if (not ref $result) {
+	print "ok 2\n";
+	last;
+    }
+}
 
 $x->event_handler('queue');
 
@@ -116,11 +127,11 @@ while (1)
 	$x->CloseFont($font);
 	$x->FreeGC($gc);
 	undef $x;
-	print "ok 2\n";
+	print "ok 3\n";
 	exit;
       }
   }
-    
+
 sub getGC
   {
     my($win, $font) = @_;
@@ -144,7 +155,7 @@ sub text_width
 sub place_text
   {
     my($win, $gc, $font, $w, $h) = @_;
-    
+
     my $string1 = "Hi! I'm a window, who are you?";
     my $string2 = "To terminate program, press any key";
     my $string3 = "or button while in this window";
@@ -152,7 +163,7 @@ sub place_text
 
     my(%font_info) = $x->QueryFont($font);
     my($font_h) = $font_info{font_ascent} + $font_info{font_descent};
-    
+
     $x->PolyText8($win, $gc, ($w - text_width($font, $string1))/2,
 		  $font_h, [0, $string1]);
     $x->PolyText8($win, $gc, ($w - text_width($font, $string2))/2,
@@ -176,7 +187,7 @@ sub place_text
 sub place_graphics
   {
     my($win, $gc, $w, $h) = @_;
-    
+
     my($height) = $h / 2;
     my($width) = 3 * $w / 4;
     my($ex) = $w/2 - $width/2;

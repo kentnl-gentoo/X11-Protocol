@@ -17,7 +17,7 @@
 #define max(a, b) ((a) >= (b) ? (a) : (b))
 
 #ifdef NEED_HYPOT
-/* SVID 3, BSD 4.3, XOpen, C9X  and GNU all have hypot(). Why don't you? */
+/* SVID 3, BSD 4.3, XOpen, C99 and GNU all have hypot(). Why don't you? */
 #define hypot(a, b) sqrt((a)*(a) + (b)*(b))
 #endif
 
@@ -47,16 +47,16 @@ double font_frac = .6001;/* text fills 60% of the height of the progresss bar*/
    so if you also have a corresponding Type 1 outline, that's the best
    choice: 
    (bitmaps for sizes 8, 10, 11, 12, 14, 17, 18, 20, 24, 25, and 34) */
-char *fontname = "-adobe-helvetica-medium-r-normal--%d-*-*-*-*-*-iso8859-1";
+/*char *fontname="-adobe-helvetica-medium-r-normal--%d-*-*-*-*-*-iso8859-1";*/
 /* Appending the following subsetting hint will speed up resizes, at the
    expense of excluding premade bitmaps:
    "[48 49 50 51 52 53 54 55 56 57 37]"; */
 /* (If you're using Debian Linux like me, you'll need to install the
    gsfonts and gsfonts-x11 packages to get the Type 1 versions. The
    outline isn't the genuine Adobe version; it's a free clone that
-   can also be accessed directly (without Adobe's bitmaps) as)
+   can also be accessed directly (without Adobe's bitmaps) as)*/
 char *fontname = "-urw-nimbus sans l-regular-r-normal--%d-*-*-*-*-*-iso8859-1";
-   * Recent X releases also include some scalable fonts, though not any
+/* * Recent X releases also include some scalable fonts, though not any
    sans-serif ones. In the following, adobe-utopia can be replaced by
    adobe-courier, bitstream-courier, or bitstream-charter:
 char *fontname = "-adobe-utopia-medium-r-normal--%d-*-*-*-*-*-iso8859-1";
