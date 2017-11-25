@@ -91,9 +91,19 @@ $gc = getGC($win, $font);
 
 $x->MapWindow($win);
 
+$SIG{ALRM} = sub { die "Timeout" };
+alarm(5);
 while (1)
   {
-    $x->handle_input until %e = $x->dequeue_event;
+    eval { $x->handle_input until %e = $x->dequeue_event; };
+    if ($@)
+    {
+        if ($@ =~ /Timeout/) {
+            print "ok 3\n";
+            last;
+        }
+        die $@;
+    }
     if ($e{name} eq "Expose")
       {
 	next unless $e{count} == 0;
