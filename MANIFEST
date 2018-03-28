@@ -33,4 +33,4 @@ eg/widgets2.pl				X11-Motif version of widget example
 eg/widgets3.pl				Unfinished OO-interface widget example
 eg/widgets.c				C Xlib version of widget example
 eg/wintree.pl				Window hierarchy utility example
-test.pl					Short test of Protocol.pm et al.
+t/x11.t					Short test of Protocol.pm et al.
